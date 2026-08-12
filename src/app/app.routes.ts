@@ -9,6 +9,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'courses/:id',  // ← NEW: Route with parameter
+    loadComponent: () =>
+      import('./features/course-detail/course-detail.component').then(
+        (m) => m.CourseDetailComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full',
