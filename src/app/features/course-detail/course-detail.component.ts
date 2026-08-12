@@ -1,5 +1,7 @@
-import { Component, input, effect } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { httpResource } from '@angular/common/http';
+import { CourseDetail } from '../../models/course.model';
 
 @Component({
   selector: 'app-course-detail',
@@ -9,15 +11,7 @@ import { RouterLink } from '@angular/router';
   styleUrl: './course-detail.component.scss',
 })
 export class CourseDetailComponent {
-  // This automatically receives :id from the URL /courses/:id
-  // The name must match exactly: the route says ":id", so the input is called "id"
   id = input.required<string>();
 
-  constructor() {
-    // effect() watches any signals read inside it
-    // Every time id() changes, this code runs again
-    effect(() => {
-      console.log('Loading course detail for ID:', this.id());
-    });
-  }
+  courseResource = httpResource<CourseDetail>(() => `http://localhost:5282/api/v2/courses/${this.id()}`);
 }

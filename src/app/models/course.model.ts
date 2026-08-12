@@ -14,13 +14,20 @@ export interface Course {
  * Envelope for GET /api/courses - TMS API contract List shape (PagedResponse<T>)
  */
 export interface PagedResponse<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasPrevious: boolean;
-  hasNext: boolean;
+  data: T[];
+  meta: {
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
+  };
+  links: {
+    self: string;
+    next?: string;
+    prev?: string;
+  };
 }
 
 /**

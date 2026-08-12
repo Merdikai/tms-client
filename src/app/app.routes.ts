@@ -9,10 +9,17 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'courses/:id',  // ← NEW: Route with parameter
+    path: 'courses/:id',
     loadComponent: () =>
       import('./features/course-detail/course-detail.component').then(
         (m) => m.CourseDetailComponent
+      ),
+  },
+  {
+    path: 'enroll',
+    loadComponent: () =>
+      import('./features/enrollment-form/enrollment-form.component').then(
+        (m) => m.EnrollmentFormComponent
       ),
   },
   {
