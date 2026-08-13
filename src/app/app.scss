@@ -1,0 +1,29 @@
+.main-header {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  a {
+    margin-left: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+
+    &.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-weight: 600;
+    }
+  }
+}
+
+.content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}

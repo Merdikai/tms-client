@@ -1,7 +1,8 @@
-﻿import { Component, signal, computed } from '@angular/core';
-import { httpResource } from '@angular/common/http';
+import { Component, signal, computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { CourseCardComponent } from '../../ui/course-card/course-card.component';
 import { Course } from '../../models/course.model';
+import { CourseService } from '../../services/course.service';
 import { RouterLink } from "@angular/router";
 
 @Component({
@@ -12,6 +13,8 @@ import { RouterLink } from "@angular/router";
   styleUrl: './student-dashboard.component.scss',
 })
 export class StudentDashboardComponent {
+  private api = inject(CourseService);
+
   studentName = signal('Liya Kebede');
   earnedCredits = signal(45);
 
@@ -21,7 +24,9 @@ export class StudentDashboardComponent {
 
   selectedCourse = signal<Course | null>(null);
 
-  coursesResource = httpResource<{ data: Course[] }>(() => 'http://localhost:5282/api/v2/courses?page=1&pageSize=50');
+  coursesResource = rxResource({
+    stream: () => this.api.getAll(),
+  });
 
   registerForClass() {
     this.earnedCredits.update((c) => c + 3);

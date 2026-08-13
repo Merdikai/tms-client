@@ -1,1 +1,12 @@
-<router-outlet />
+<mat-toolbar color="primary" class="main-header">
+  <span class="brand">TMS Platform</span>
+  <span class="spacer"></span>
+  <a mat-button routerLink="/dashboard" routerLinkActive="active">Instructor Dashboard</a>
+  <a mat-button routerLink="/student" routerLinkActive="active">Student Catalog</a>
+  <a mat-button routerLink="/enroll" routerLinkActive="active">Enroll Form</a>
+  <a mat-button routerLink="/enrollments" routerLinkActive="active">Enrollments Grid</a>
+</mat-toolbar>
+
+<main class="content-area">
+  <router-outlet />
+</main>

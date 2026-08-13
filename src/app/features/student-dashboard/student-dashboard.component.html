@@ -1,4 +1,4 @@
-﻿<div class="dashboard">
+<div class="dashboard">
   <h1>Welcome, {{ studentName() }}</h1>
   <p>Credits Earned: {{ earnedCredits() }}</p>
   <p>Graduation Status: {{ graduationStatus() }}</p>
@@ -10,11 +10,13 @@
 @if (coursesResource.isLoading()) {
   <div class="spinner">Loading courses...</div>
 } @else if (coursesResource.error()) {
-  <div class="error">Failed to load courses.</div>
+  <div class="error">Failed to load courses. Check API connection.</div>
 } @else {
   <div class="grid">
-    @for (course of coursesResource.value()?.data ?? []; track course.id) {
+    @for (course of coursesResource.value()!; track course.id) {
       <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
+    } @empty {
+      <p>No courses are available this term.</p>
     }
   </div>
 }
