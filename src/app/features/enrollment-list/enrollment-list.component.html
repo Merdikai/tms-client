@@ -1,0 +1,59 @@
+<div class="enrollment-container">
+  <h2>Enrollment Management</h2>
+
+  <!-- Loading State -->
+  @if (store.isLoading()) {
+    <div class="loading">🔄 Loading enrollments...</div>
+  }
+
+  <!-- Error State -->
+  @if (store.error()) {
+    <div class="error">
+      ❌ {{ store.error() }}
+      <button (click)="store.loadEnrollments()">Retry</button>
+    </div>
+  }
+
+  <!-- Stats Summary -->
+  @if (!store.isLoading() && store.entities().length > 0) {
+    <div class="stats">
+      <span class="stat pending">Pending: {{ store.pendingCount() }}</span>
+      <span class="stat approved">Approved: {{ store.approvedCount() }}</span>
+      <span class="stat rejected">Rejected: {{ store.rejectedCount() }}</span>
+      <span class="stat total">Total: {{ store.entities().length }}</span>
+    </div>
+  }
+
+  <!-- Enrollment Cards -->
+  <div class="enrollment-grid">
+    @for (enrollment of store.entities(); track enrollment.id) {
+      <div class="enrollment-card" [class]="enrollment.status.toLowerCase()">
+        <div class="enrollment-info">
+          <strong>{{ enrollment.studentName }}</strong>
+          <span class="course">{{ enrollment.courseName }}</span>
+          <span class="status-badge" [class]="enrollment.status.toLowerCase()">
+            {{ enrollment.status }}
+          </span>
+        </div>
+        <div class="enrollment-actions">
+          @if (enrollment.status === 'Pending') {
+            <button class="approve" (click)="onApprove(enrollment.id)">
+              ✅ Approve
+            </button>
+            <button class="reject" (click)="onReject(enrollment.id)">
+              ❌ Reject
+            </button>
+          }
+          @if (enrollment.status === 'Approved') {
+            <span class="badge approved">✅ Approved</span>
+          }
+          @if (enrollment.status === 'Rejected') {
+            <span class="badge rejected">❌ Rejected</span>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">No enrollments found.</div>
+    }
+  </div>
+</div>

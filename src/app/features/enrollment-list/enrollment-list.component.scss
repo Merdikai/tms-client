@@ -1,0 +1,181 @@
+.enrollment-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  h2 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: #7f8c8d;
+  }
+
+  .error {
+    background: #fde8e8;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 1rem;
+    color: #721c24;
+    margin-bottom: 1rem;
+
+    button {
+      margin-left: 1rem;
+      padding: 0.25rem 0.75rem;
+      background: #721c24;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  }
+
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+
+    .stat {
+      font-weight: 500;
+
+      &.pending { color: #f39c12; }
+      &.approved { color: #27ae60; }
+      &.rejected { color: #e74c3c; }
+      &.total { color: #2c3e50; }
+    }
+  }
+
+  .enrollment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+  }
+
+  .enrollment-card {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: box-shadow 0.2s;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &.pending {
+      border-left: 4px solid #f39c12;
+    }
+
+    &.approved {
+      border-left: 4px solid #27ae60;
+    }
+
+    &.rejected {
+      border-left: 4px solid #e74c3c;
+      opacity: 0.7;
+    }
+
+    .enrollment-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      strong {
+        font-size: 1.1rem;
+        color: #2c3e50;
+      }
+
+      .course {
+        color: #5a6a7a;
+        font-size: 0.95rem;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+
+        &.pending {
+          background: #fef3e2;
+          color: #f39c12;
+        }
+
+        &.approved {
+          background: #e8f5e9;
+          color: #27ae60;
+        }
+
+        &.rejected {
+          background: #fde8e8;
+          color: #e74c3c;
+        }
+      }
+    }
+
+    .enrollment-actions {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+
+      button {
+        padding: 0.4rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+
+        &.approve {
+          background: #27ae60;
+          color: white;
+
+          &:hover {
+            background: #219a52;
+          }
+        }
+
+        &.reject {
+          background: #e74c3c;
+          color: white;
+
+          &:hover {
+            background: #c0392b;
+          }
+        }
+      }
+
+      .badge {
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+
+        &.approved {
+          background: #e8f5e9;
+          color: #27ae60;
+        }
+
+        &.rejected {
+          background: #fde8e8;
+          color: #e74c3c;
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #7f8c8d;
+    grid-column: 1 / -1;
+  }
+}

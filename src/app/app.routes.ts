@@ -22,6 +22,13 @@ export const routes: Routes = [
         (m) => m.EnrollmentFormComponent
       ),
   },
+   {
+    path: 'enrollments',  // ← NEW
+    loadComponent: () =>
+      import('./features/enrollment-list/enrollment-list.component').then(
+        (m) => m.EnrollmentListComponent
+      ),
+  },
   {
     path: '',
     redirectTo: 'dashboard',
