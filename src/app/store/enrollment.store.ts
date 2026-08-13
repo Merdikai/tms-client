@@ -14,26 +14,21 @@ import {
   removeEntity,
 } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, concatMap, tap, catchError, EMPTY } from 'rxjs';
+import { pipe, concatMap, tap, catchError, EMPTY, switchMap } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment.service';
+import { LiveSyncService, EnrollmentStatusEvent } from '../services/live-sync.service';
 import { Enrollment } from '../models/enrollment.model';
 
 export const EnrollmentStore = signalStore(
   { providedIn: 'root' },
 
-  // withState adds simple properties alongside the entity collection
   withState({
     isLoading: false,
     error: null as string | null,
   }),
 
-  // withEntities creates an O(1) ID-indexed dictionary for the enrollment collection.
-  // Internally, it stores { ids: string[], entityMap: Record<string, Enrollment> }
-  // so lookups and updates by ID are instant - no array scanning.
   withEntities<Enrollment>(),
 
-  // withComputed creates read-only derived signals that update automatically.
-  // pendingCount recalculates every time the entity collection changes.
   withComputed((store) => ({
     pendingCount: computed(
       () => store.entities().filter((e) => e.status === 'Pending').length
@@ -46,76 +41,105 @@ export const EnrollmentStore = signalStore(
     ),
   })),
 
-  // withMethods defines actions that can modify the store state
-  withMethods((store, enrollmentService = inject(EnrollmentService)) => ({
-    // Loading Data
-    // Why concatMap here? Because concatMap processes one emission at a time
-    // in strict order. If something triggers loadEnrollments() twice quickly,
-    // concatMap waits for the first HTTP response before starting the second.
-    // switchMap would cancel the first request (data loss risk).
-    // mergeMap would run both in parallel (race condition risk).
-    loadEnrollments: rxMethod<void>(
-  pipe(
-    tap(() => patchState(store, { isLoading: true })),
-    tap(() => {
-      const mockEnrollments: Enrollment[] = [
-        { id: '1', studentId: 1, studentName: 'Liya Kebede', courseId: 1, courseName: 'Advanced Java Services', status: 'Pending', enrolledAt: '2026-08-13T08:00:00Z' },
-        { id: '2', studentId: 2, studentName: 'Dawit Tadesse', courseId: 2, courseName: 'Angular UI Lab', status: 'Approved', enrolledAt: '2026-08-12T10:30:00Z' },
-        { id: '3', studentId: 3, studentName: 'Sara Bekele', courseId: 3, courseName: 'Database Design', status: 'Pending', enrolledAt: '2026-08-11T14:15:00Z' },
-      ];
-      patchState(store, setAllEntities(mockEnrollments), { isLoading: false });
-    })
-  )
-),
+  withMethods((store) => {
+    const enrollmentService = inject(EnrollmentService);
+    const liveSync = inject(LiveSyncService);
 
-    // Optimistic Approve
-    // Step 1: Instantly flip the status to "Approved" in the store.
-    // Every component reading from the store sees the change immediately.
-    // Step 2: Send the approval to the server.
-    // Step 3: If the server rejects it, roll back the status to "Pending."
-    approveEnrollment: rxMethod<string>(
-  pipe(
-    tap((id) => {
-      patchState(store, updateEntity({ id, changes: { status: 'Approved' } }));
-    })
-  )
-),
-rejectEnrollment: rxMethod<string>(
-  pipe(
-    tap((id) => {
-      patchState(store, updateEntity({ id, changes: { status: 'Rejected' } }));
-    })
-  )
-),
+    // Auto-connect and subscribe to SignalR live updates for immediate reactive updates
+    liveSync.connect();
+    liveSync.events$.subscribe((event: EnrollmentStatusEvent) => {
+      console.log('[EnrollmentStore] SignalR live update received in store:', event);
+      const current = store.entities();
+      const updated = current.map((e) =>
+        e.id === event.id ? { ...e, status: event.status } : e
+      );
+      patchState(store, setAllEntities(updated));
+    });
 
-    // Add a new enrollment (optimistic)
-    addEnrollment: (enrollment: Enrollment) => {
-      patchState(store, addEntity(enrollment));
-    },
+    return {
+      loadEnrollments: rxMethod<void>(
+        pipe(
+          tap(() => {
+            if (store.entities().length === 0) {
+              patchState(store, { isLoading: true });
+              const mockEnrollments: Enrollment[] = [
+                { id: '1', studentId: 1, studentName: 'Liya Kebede', courseId: 1, courseName: 'Advanced Java Services', status: 'Pending', enrolledAt: '2026-08-13T08:00:00Z' },
+                { id: '2', studentId: 2, studentName: 'Dawit Tadesse', courseId: 2, courseName: 'Angular UI Lab', status: 'Approved', enrolledAt: '2026-08-12T10:30:00Z' },
+                { id: '3', studentId: 3, studentName: 'Sara Bekele', courseId: 3, courseName: 'Database Design', status: 'Pending', enrolledAt: '2026-08-11T14:15:00Z' },
+              ];
+              patchState(store, setAllEntities(mockEnrollments), { isLoading: false });
+            }
+          })
+        )
+      ),
 
-    // Remove an enrollment (optimistic)
-    removeEnrollment: rxMethod<string>(
-      pipe(
-        tap((id) => {
-          patchState(store, removeEntity(id));
-        }),
-        concatMap((id) =>
-          // In a real app, you'd call a delete endpoint here
-          // For now, we just log and succeed
-          enrollmentService.getAll().pipe(
-            tap(() => console.log('Enrollment removed:', id)),
-            catchError((err) => {
-              // Rollback: we'd need to refetch or store the deleted entity
-              // For simplicity, we just log the error
-              console.error('Failed to delete enrollment:', err);
-              patchState(store, {
-                error: 'Failed to delete enrollment.',
-              });
-              return EMPTY;
-            })
+      approveEnrollment: rxMethod<string>(
+        pipe(
+          tap((id: string) => {
+            const updated = store.entities().map((e) =>
+              e.id === id ? { ...e, status: 'Approved' as const } : e
+            );
+            patchState(store, setAllEntities(updated));
+          }),
+          concatMap((id: string) =>
+            enrollmentService.approve(id).pipe(
+              catchError((err) => {
+                console.error('Approve enrollment failed:', err);
+                const reverted = store.entities().map((e) =>
+                  e.id === id ? { ...e, status: 'Pending' as const } : e
+                );
+                patchState(store, setAllEntities(reverted));
+                patchState(store, {
+                  error: 'Server rejected the approval. Check enrollment constraints.',
+                });
+                return EMPTY;
+              })
+            )
           )
         )
-      )
-    ),
-  }))
+      ),
+
+      rejectEnrollment: rxMethod<string>(
+        pipe(
+          tap((id: string) => {
+            const updated = store.entities().map((e) =>
+              e.id === id ? { ...e, status: 'Rejected' as const } : e
+            );
+            patchState(store, setAllEntities(updated));
+          }),
+          concatMap((id: string) =>
+            enrollmentService.reject(id).pipe(
+              catchError((err) => {
+                console.error('Reject enrollment failed:', err);
+                const reverted = store.entities().map((e) =>
+                  e.id === id ? { ...e, status: 'Pending' as const } : e
+                );
+                patchState(store, setAllEntities(reverted));
+                patchState(store, {
+                  error: 'Server rejected the rejection. Check enrollment constraints.',
+                });
+                return EMPTY;
+              })
+            )
+          )
+        )
+      ),
+
+      addEnrollment: (enrollment: Enrollment) => {
+        patchState(store, addEntity(enrollment));
+      },
+
+      removeEnrollment: rxMethod<string>(
+        pipe(
+          tap((id: string) => {
+            patchState(store, removeEntity(id));
+          })
+        )
+      ),
+
+      listenForLiveUpdates: () => {
+        liveSync.connect();
+      },
+    };
+  })
 );

@@ -38,7 +38,8 @@ export class EnrollmentListComponent {
       if (s) this.dataSource.sort = s;
     });
 
-    // Load enrollments on component creation
+    // Load enrollments on component creation and listen to live SignalR stream
     this.store.loadEnrollments();
+    this.store.listenForLiveUpdates();
   }
 }
