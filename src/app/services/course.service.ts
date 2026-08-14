@@ -1,28 +1,23 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import { Course, CourseDetail, PagedResponse } from '../models/course.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class CourseService {
   private http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/courses`;
 
-  // Update this URL to match your API's address and version
-  private baseUrl = 'http://localhost:5282/api/v2/courses';
-
-  // ✅ FIXED: Changed .getAll to .get (HttpClient has .get, not .getAll)
   getAll() {
     return this.http
-      .get<PagedResponse<Course>>(this.baseUrl, {
+      .get<PagedResponse<Course>>(this.base, {
         params: { page: '1', pageSize: '50' },
       })
-      //.pipe(map((p) => p.items));
-      .pipe(map((p) => p.data))   // For V2 with data/meta/links envelope
+      .pipe(map((response) => response.items ?? (response as any).data ?? []));
   }
 
   getById(id: string) {
-    return this.http.get<CourseDetail>(`${this.baseUrl}/${id}`);
+    return this.http.get<CourseDetail>(`${this.base}/${id}`);
   }
 }
