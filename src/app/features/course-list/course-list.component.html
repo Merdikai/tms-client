@@ -1,0 +1,56 @@
+<div class="course-container">
+  <div class="header-section">
+    <h2>Course Catalog ({{ store.courseCount() }} Courses)</h2>
+  </div>
+
+  <!-- Loading State -->
+  @if (store.isLoading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading courses...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (store.error()) {
+    <div class="error-banner">
+      <span class="error-text">⚠️ {{ store.error() }}</span>
+      <button mat-button color="warn" (click)="store.loadCourses()">Retry</button>
+    </div>
+  }
+
+  <!-- Course Grid -->
+  <div class="course-grid">
+    @for (course of store.entities(); track course.id) {
+      <mat-card class="course-card">
+        <mat-card-header>
+          <mat-card-title>{{ course.title }}</mat-card-title>
+          <mat-card-subtitle>{{ course.code }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p>Capacity: {{ course.enrollmentCount }} / {{ course.maxCapacity }}</p>
+          <span
+            class="status-chip"
+            [class.full]="course.enrollmentCount >= course.maxCapacity"
+          >
+            {{ course.enrollmentCount >= course.maxCapacity ? 'Full' : 'Available' }}
+          </span>
+        </mat-card-content>
+        <mat-card-actions>
+          <button
+            mat-raised-button
+            color="warn"
+            (click)="onDelete(course.id, course.title)"
+            class="delete-btn"
+          >
+            Delete Course
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    } @empty {
+      @if (!store.isLoading()) {
+        <p class="empty-state">No courses available.</p>
+      }
+    }
+  </div>
+</div>

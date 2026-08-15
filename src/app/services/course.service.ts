@@ -20,4 +20,8 @@ export class CourseService {
   getById(id: string) {
     return this.http.get<CourseDetail>(`${this.base}/${id}`);
   }
+
+  delete(id: number | string) {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
 }
