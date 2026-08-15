@@ -8,19 +8,34 @@ export interface Course {
   title: string;
   maxCapacity: number;
   enrollmentCount: number;
+  status?: string;
 }
 
 /**
  * Envelope for GET /api/courses - TMS API contract List shape (PagedResponse<T>)
  */
 export interface PagedResponse<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasPrevious: boolean;
-  hasNext: boolean;
+  items?: T[];
+  data?: T[];
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  meta?: {
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
+  };
+  links?: {
+    self: string;
+    next?: string;
+    prev?: string;
+  };
 }
 
 /**

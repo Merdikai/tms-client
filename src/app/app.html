@@ -1,1 +1,20 @@
-<router-outlet />
+<mat-toolbar color="primary" class="main-header">
+  <span class="brand">TMS Platform</span>
+  <span class="spacer"></span>
+  @if (auth.isAuthenticated()) {
+    <a mat-button routerLink="/dashboard" routerLinkActive="active">Instructor Dashboard</a>
+    <a mat-button routerLink="/student" routerLinkActive="active">Student Catalog</a>
+    <a mat-button routerLink="/enroll" routerLinkActive="active">Enroll Form</a>
+    <a mat-button routerLink="/enrollments" routerLinkActive="active">Enrollments Grid</a>
+    <a mat-button routerLink="/grade-submission" routerLinkActive="active">Grade Submission</a>
+    
+    <span class="user-badge">{{ auth.currentUser()?.displayName }} ({{ auth.currentUser()?.role }})</span>
+    <button mat-stroked-button color="warn" (click)="logout()" class="logout-btn">Logout</button>
+  } @else {
+    <a mat-button routerLink="/login" routerLinkActive="active">Sign In</a>
+  }
+</mat-toolbar>
+
+<main class="content-area">
+  <router-outlet />
+</main>

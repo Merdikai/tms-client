@@ -1,0 +1,17 @@
+<div class="detail">
+  @if (courseResource.isLoading()) {
+    <div class="spinner">Loading course details...</div>
+  } @else if (courseResource.error()) {
+    <div class="error">Course not found or failed to load.</div>
+  } @else if (courseResource.value(); as course) {
+    <h1>{{ course.title }} ({{ course.code }})</h1>
+    <p>Course ID: {{ course.id }}</p>
+    <p>Capacity: {{ course.enrollmentCount }} / {{ course.maxCapacity }} students enrolled</p>
+    <p>
+      Status:
+      <strong>{{ course.enrollmentCount >= course.maxCapacity ? 'Full' : 'Accepting Enrollments' }}</strong>
+    </p>
+  }
+  <br />
+  <a routerLink="/dashboard">← Back to Dashboard</a>
+</div>

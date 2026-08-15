@@ -1,0 +1,45 @@
+.main-header {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  a {
+    margin-left: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+
+    &.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-weight: 600;
+    }
+  }
+
+  .user-badge {
+    margin-left: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 0.35rem 0.75rem;
+    border-radius: 16px;
+  }
+
+  .logout-btn {
+    margin-left: 0.75rem;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+.content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
