@@ -2,12 +2,21 @@
   <span class="brand">TMS Platform</span>
   <span class="spacer"></span>
   @if (auth.isAuthenticated()) {
-    <a mat-button routerLink="/dashboard" routerLinkActive="active">Instructor Dashboard</a>
+    <!-- Instructor & Admin Links -->
+    @if (auth.hasRole('Instructor')) {
+      <a mat-button routerLink="/dashboard" routerLinkActive="active">Instructor Dashboard</a>
+      <a mat-button routerLink="/enrollments" routerLinkActive="active">Enrollments Grid</a>
+      <a mat-button routerLink="/grade-submission" routerLinkActive="active">Grade Submission</a>
+    }
+
+    <!-- Student & Admin Links -->
+    @if (auth.hasRole('Student')) {
+      <a mat-button routerLink="/student" routerLinkActive="active">Student Dashboard</a>
+      <a mat-button routerLink="/enroll" routerLinkActive="active">Enroll Form</a>
+    }
+
+    <!-- All Authenticated Users -->
     <a mat-button routerLink="/courses" routerLinkActive="active">Course Catalog</a>
-    <a mat-button routerLink="/student" routerLinkActive="active">Student Catalog</a>
-    <a mat-button routerLink="/enroll" routerLinkActive="active">Enroll Form</a>
-    <a mat-button routerLink="/enrollments" routerLinkActive="active">Enrollments Grid</a>
-    <a mat-button routerLink="/grade-submission" routerLinkActive="active">Grade Submission</a>
     
     <span class="user-badge">{{ auth.currentUser()?.displayName }} ({{ auth.currentUser()?.role }})</span>
     <button mat-stroked-button color="warn" (click)="logout()" class="logout-btn">Logout</button>

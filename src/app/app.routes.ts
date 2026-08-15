@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -15,7 +16,7 @@ export const routes: Routes = [
       import('./features/instructor-dashboard/instructor-dashboard.component').then(
         (m) => m.InstructorDashboardComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Instructor')],
   },
   {
     path: 'student',
@@ -23,7 +24,7 @@ export const routes: Routes = [
       import('./features/student-dashboard/student-dashboard.component').then(
         (m) => m.StudentDashboardComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Student')],
   },
   {
     path: 'enrollments',
@@ -31,7 +32,7 @@ export const routes: Routes = [
       import('./features/enrollment-list/enrollment-list.component').then(
         (m) => m.EnrollmentListComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Instructor')],
   },
   {
     path: 'courses',
@@ -55,7 +56,7 @@ export const routes: Routes = [
       import('./features/enrollment-form/enrollment-form.component').then(
         (m) => m.EnrollmentFormComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Student')],
   },
   {
     path: 'grade-submission',
@@ -63,11 +64,11 @@ export const routes: Routes = [
       import('./features/grade-submission/grade-submission.component').then(
         (m) => m.GradeSubmissionComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [roleGuard('Instructor')],
   },
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
   },
-];
+];
