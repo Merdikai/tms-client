@@ -14,13 +14,32 @@
       <!-- Student Name Column -->
       <ng-container matColumnDef="studentName">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Student</th>
-        <td mat-cell *matCellDef="let row">{{ row.studentName }}</td>
+        <td mat-cell *matCellDef="let row">
+          <div>
+            <strong>{{ row.studentName }}</strong>
+            <div style="font-size: 11px; color: #757575;">ID: STU-{{ row.studentId }}</div>
+          </div>
+        </td>
       </ng-container>
 
       <!-- Course Name Column -->
       <ng-container matColumnDef="courseName">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Course</th>
-        <td mat-cell *matCellDef="let row">{{ row.courseName }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Course & Details</th>
+        <td mat-cell *matCellDef="let row">
+          <div>
+            <strong>{{ row.courseName }}</strong> (ID: {{ row.courseId }})
+            @if (row.notes) {
+              <div style="font-size: 12px; color: #455a64; margin-top: 2px;">
+                <em>Note:</em> "{{ row.notes }}"
+              </div>
+            }
+            @if (row.backupCourses && row.backupCourses.length > 0) {
+              <div style="font-size: 11px; color: #0288d1; margin-top: 2px;">
+                <em>Backups:</em> {{ row.backupCourses.join(', ') }}
+              </div>
+            }
+          </div>
+        </td>
       </ng-container>
 
       <!-- Status Column -->
@@ -33,25 +52,43 @@
         </td>
       </ng-container>
 
+      <!-- Grade Column -->
+      <ng-container matColumnDef="grade">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Final Grade</th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.grade !== undefined && row.grade !== null) {
+            <span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px;">
+              {{ row.grade }}% ({{ row.letterGrade || 'A' }})
+            </span>
+          } @else {
+            <span style="color: #9e9e9e; font-size: 12px; font-style: italic;">
+              Not Graded
+            </span>
+          }
+        </td>
+      </ng-container>
+
       <!-- Actions Column -->
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let row">
           @if (row.status === 'Pending') {
-            <button mat-flat-button color="primary" (click)="store.approveEnrollment(row.id)">Approve</button>
+            <div style="display: flex; gap: 8px;">
+              <button mat-flat-button color="primary" (click)="store.approveEnrollment(row.id)">Approve</button>
+              <button mat-stroked-button color="warn" (click)="store.rejectEnrollment(row.id)">Reject</button>
+            </div>
+          } @else if (row.status === 'Approved') {
+            <span class="action-confirmed">Enrolled</span>
+          } @else {
+            <span style="color: #c62828; font-size: 12px; font-weight: 500;">Rejected</span>
           }
         </td>
       </ng-container>
 
-      <!-- Row definitions -->
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <mat-paginator
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 25, 50]"
-      showFirstLastButtons>
-    </mat-paginator>
+    <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
   </div>
 </div>

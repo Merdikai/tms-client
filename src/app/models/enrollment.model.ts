@@ -6,4 +6,8 @@ export interface Enrollment {
   courseName: string;
   status: 'Pending' | 'Approved' | 'Rejected';
   enrolledAt: string;
+  grade?: number;
+  letterGrade?: string;
+  notes?: string;
+  backupCourses?: string[];
 }

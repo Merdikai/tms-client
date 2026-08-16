@@ -1,73 +1,94 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, exhaustMap } from 'rxjs';
-import { GradeService, GradePayload } from '../../services/grade.service';
+import { firstValueFrom } from 'rxjs';
+import { GradeService } from '../../services/grade.service';
+import { EnrollmentStore } from '../../store/enrollment.store';
 
 @Component({
   selector: 'tms-grade-submission',
   standalone: true,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './grade-submission.component.html',
   styleUrl: './grade-submission.component.scss',
 })
-export class GradeSubmissionComponent {
+export class GradeSubmissionComponent implements OnInit {
   private api = inject(GradeService);
   private fb = inject(FormBuilder);
+  enrollmentStore = inject(EnrollmentStore);
 
   gradeForm = this.fb.group({
-    studentId: [101, [Validators.required, Validators.min(1)]],
-    courseId: [302, [Validators.required, Validators.min(1)]],
+    studentId: [1, [Validators.required, Validators.min(1)]],
+    courseId: [1, [Validators.required, Validators.min(1)]],
     score: [88, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
-  isSubmitting = false;
-  submissionStatus = '';
+  isSubmitting = signal(false);
+  submissionStatus = signal('');
+  isSuccess = signal(false);
 
-  private submitClick$ = new Subject<GradePayload>();
-
-  constructor() {
-    this.submitClick$
-      .pipe(
-        exhaustMap((payload: GradePayload) => {
-          this.isSubmitting = true;
-          this.submissionStatus = 'Submitting grade to server...';
-          return this.api.postGrade(payload);
-        }),
-        takeUntilDestroyed()
-      )
-      .subscribe({
-        next: (result: { id: string; success: boolean }) => {
-          this.isSubmitting = false;
-          this.submissionStatus = `Grade saved successfully! Record ID: ${result.id}`;
-        },
-        error: (err: any) => {
-          this.isSubmitting = false;
-          this.submissionStatus = `Submission failed: ${err?.message || 'Server error'}`;
-        },
-      });
+  ngOnInit() {
+    this.enrollmentStore.loadEnrollments();
   }
 
-  onSubmit() {
-    if (this.gradeForm.valid) {
-      const rawValue = this.gradeForm.getRawValue();
-      this.submitClick$.next({
-        studentId: Number(rawValue.studentId),
-        courseId: Number(rawValue.courseId),
-        score: Number(rawValue.score),
+  onSelectEnrollment(enrollmentId: string) {
+    const enrollment = this.enrollmentStore.entities().find((e) => e.id === enrollmentId);
+    if (enrollment) {
+      this.gradeForm.patchValue({
+        studentId: enrollment.studentId,
+        courseId: enrollment.courseId,
       });
+    }
+  }
+
+  async onSubmit() {
+    if (this.gradeForm.invalid || this.isSubmitting()) {
+      this.gradeForm.markAllAsTouched();
+      return;
+    }
+
+    const rawValue = this.gradeForm.getRawValue();
+    const studentIdNum = Number(rawValue.studentId);
+    const courseIdNum = Number(rawValue.courseId);
+    const scoreNum = Number(rawValue.score);
+
+    this.isSubmitting.set(true);
+    this.submissionStatus.set('Submitting grade to server...');
+    this.isSuccess.set(false);
+
+    try {
+      const result = await firstValueFrom(
+        this.api.postGrade({
+          studentId: studentIdNum,
+          courseId: courseIdNum,
+          score: scoreNum,
+        })
+      );
+      this.isSuccess.set(true);
+      this.submissionStatus.set(`Grade saved successfully to database! Record ID: ${result.id}`);
+
+      // Update store so student dashboard and enrollment list reflect the grade immediately
+      this.enrollmentStore.updateGrade(studentIdNum, courseIdNum, scoreNum);
+    } catch (err: any) {
+      this.isSuccess.set(false);
+      this.submissionStatus.set(`Submission failed: ${err?.error?.detail || err?.message || 'Server error'}`);
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 }

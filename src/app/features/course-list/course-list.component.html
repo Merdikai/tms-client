@@ -37,14 +37,29 @@
           </span>
         </mat-card-content>
         <mat-card-actions>
-          <button
-            mat-raised-button
-            color="warn"
-            (click)="onDelete(course.id, course.title)"
-            class="delete-btn"
-          >
-            Delete Course
-          </button>
+          <!-- Instructor / Admin only: Delete button -->
+          @if (auth.hasRole('Instructor')) {
+            <button
+              mat-raised-button
+              color="warn"
+              (click)="onDelete(course.id, course.title)"
+              class="delete-btn"
+            >
+              Delete Course
+            </button>
+          }
+
+          <!-- Student: Enroll button -->
+          @if (auth.hasRole('Student')) {
+            <button
+              mat-flat-button
+              color="primary"
+              [routerLink]="['/enroll']"
+              [queryParams]="{ courseId: course.id }"
+            >
+              Enroll
+            </button>
+          }
         </mat-card-actions>
       </mat-card>
     } @empty {
