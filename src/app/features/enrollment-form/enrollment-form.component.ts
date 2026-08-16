@@ -5,7 +5,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EnrollmentStore } from '../../store/enrollment.store';
 import { CourseStore } from '../../store/course.store';
@@ -22,7 +22,6 @@ import { Enrollment } from '../../models/enrollment.model';
 export class EnrollmentFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private store = inject(EnrollmentStore);
   private courseStore = inject(CourseStore);
   private auth = inject(AuthService);
@@ -84,7 +83,7 @@ export class EnrollmentFormComponent implements OnInit {
 
       const backupList = payload.backupCourses.filter((b) => !!b && b.trim().length > 0);
 
-      const newEnrollment: Enrollment = {
+      const localEnrollment: Enrollment = {
         id: 'ENR-' + Date.now().toString().slice(-6),
         studentId: Number(payload.studentId.replace('STU-', '')) || 101,
         studentName: studentName,
@@ -96,9 +95,26 @@ export class EnrollmentFormComponent implements OnInit {
         backupCourses: backupList.length > 0 ? backupList : undefined,
       };
 
-      this.store.addEnrollment(newEnrollment);
-      this.createdEnrollment.set(newEnrollment);
-      this.submitted.set(true);
+      // Call database API endpoint asynchronously to persist in PostgreSQL and broadcast to SignalR
+      this.store.addEnrollmentAsync({
+        studentId: payload.studentId,
+        studentName: studentName,
+        courseId: courseIdNum,
+        term: payload.term,
+        notes: payload.notes,
+        backupCourses: backupList,
+      }).subscribe({
+        next: (created) => {
+          this.createdEnrollment.set(created || localEnrollment);
+          this.submitted.set(true);
+        },
+        error: () => {
+          // Fallback to local store if backend unreachable
+          this.store.addEnrollment(localEnrollment);
+          this.createdEnrollment.set(localEnrollment);
+          this.submitted.set(true);
+        }
+      });
     } else {
       this.form.markAllAsTouched();
     }

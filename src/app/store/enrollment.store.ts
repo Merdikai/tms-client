@@ -9,12 +9,11 @@ import {
 import {
   withEntities,
   setAllEntities,
-  updateEntity,
   addEntity,
   removeEntity,
 } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, concatMap, tap, catchError, EMPTY } from 'rxjs';
+import { pipe, concatMap, tap, catchError, EMPTY, switchMap } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment.service';
 import { LiveSyncService, EnrollmentStatusEvent } from '../services/live-sync.service';
 import { Enrollment } from '../models/enrollment.model';
@@ -75,7 +74,7 @@ export const EnrollmentStore = signalStore(
     const enrollmentService = inject(EnrollmentService);
     const liveSync = inject(LiveSyncService);
 
-    // Auto-connect and subscribe to SignalR live updates for immediate reactive updates
+    // Auto-connect and subscribe to SignalR live updates for immediate multi-device reactive updates
     liveSync.connect();
     liveSync.events$.subscribe((event: EnrollmentStatusEvent) => {
       console.log('[EnrollmentStore] SignalR live update received in store:', event);
@@ -88,28 +87,51 @@ export const EnrollmentStore = signalStore(
     });
 
     return {
+      // Load directly from PostgreSQL database API with fallback
       loadEnrollments: rxMethod<void>(
         pipe(
-          tap(() => {
-            const saved = getStoredEnrollments();
-            if (saved && saved.length > 0) {
-              patchState(store, setAllEntities(saved), { isLoading: false });
-              return;
-            }
-
-            if (store.entities().length === 0) {
-              patchState(store, { isLoading: true });
-              const defaultEnrollments: Enrollment[] = [
-                { id: 'ENR-1001', studentId: 1, studentName: 'Liya Kebede', courseId: 1, courseName: 'CSE-101 - Web Development Fundamentals', status: 'Approved', enrolledAt: '2026-08-13T08:00:00Z', grade: 92, letterGrade: 'A' },
-                { id: 'ENR-1002', studentId: 2, studentName: 'Dawit Tadesse', courseId: 2, courseName: 'CSE-102 - TypeScript Essentials', status: 'Approved', enrolledAt: '2026-08-12T10:30:00Z', grade: 85, letterGrade: 'B' },
-                { id: 'ENR-1003', studentId: 3, studentName: 'Sara Bekele', courseId: 3, courseName: 'CSE-103 - Git and Collaborative Workflows', status: 'Pending', enrolledAt: '2026-08-11T14:15:00Z' },
-              ];
-              patchState(store, setAllEntities(defaultEnrollments), { isLoading: false });
-              saveStoredEnrollments(defaultEnrollments);
-            }
-          })
+          tap(() => patchState(store, { isLoading: true })),
+          switchMap(() =>
+            enrollmentService.getAll().pipe(
+              tap((serverData) => {
+                if (serverData && serverData.length > 0) {
+                  patchState(store, setAllEntities(serverData), { isLoading: false, error: null });
+                  saveStoredEnrollments(serverData);
+                } else {
+                  // If database has 0 records yet, fallback to cache
+                  const saved = getStoredEnrollments();
+                  if (saved && saved.length > 0) {
+                    patchState(store, setAllEntities(saved), { isLoading: false });
+                  } else {
+                    const defaultEnrollments: Enrollment[] = [
+                      { id: 'ENR-1001', studentId: 1, studentName: 'Liya Kebede', courseId: 1, courseName: 'CSE-101 - Web Development Fundamentals', status: 'Approved', enrolledAt: '2026-08-13T08:00:00Z', grade: 92, letterGrade: 'A' },
+                      { id: 'ENR-1002', studentId: 2, studentName: 'Dawit Tadesse', courseId: 2, courseName: 'CSE-102 - TypeScript Essentials', status: 'Approved', enrolledAt: '2026-08-12T10:30:00Z', grade: 85, letterGrade: 'B' },
+                      { id: 'ENR-1003', studentId: 3, studentName: 'Sara Bekele', courseId: 3, courseName: 'CSE-103 - Git and Collaborative Workflows', status: 'Pending', enrolledAt: '2026-08-11T14:15:00Z' },
+                    ];
+                    patchState(store, setAllEntities(defaultEnrollments), { isLoading: false });
+                  }
+                }
+              }),
+              catchError((err) => {
+                console.warn('[EnrollmentStore] Backend API offline/syncing fallback:', err);
+                const saved = getStoredEnrollments() || [];
+                patchState(store, setAllEntities(saved), { isLoading: false });
+                return EMPTY;
+              })
+            )
+          )
         )
       ),
+
+      // Persist new enrollment directly into PostgreSQL database and update store
+      addEnrollmentAsync: (dto: { studentId: string; studentName?: string; courseId: number; term?: string; notes?: string; backupCourses?: string[] }) => {
+        return enrollmentService.create(dto).pipe(
+          tap((created) => {
+            patchState(store, addEntity(created));
+            saveStoredEnrollments(store.entities());
+          })
+        );
+      },
 
       approveEnrollment: rxMethod<string>(
         pipe(

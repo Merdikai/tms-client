@@ -23,6 +23,9 @@ export class StudentDashboardComponent implements OnInit {
 
   studentName = computed(() => this.auth.currentUser()?.displayName || 'Student');
 
+  transcriptStatus = signal<string | null>(null);
+  activeCertificate = signal<{ course: string; code: string; date: string } | null>(null);
+
   ngOnInit() {
     this.enrollmentStore.loadEnrollments();
   }
@@ -74,5 +77,22 @@ export class StudentDashboardComponent implements OnInit {
   handleEnroll(course: Course) {
     this.selectedCourse.set(course);
     this.router.navigate(['/enroll'], { queryParams: { courseId: course.id } });
+  }
+
+  requestTranscript() {
+    const reportId = 'TRN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    this.transcriptStatus.set(`Transcript Request Queued: ${reportId} (Status: Ready / Complete)`);
+  }
+
+  viewCertificate(courseName: string) {
+    this.activeCertificate.set({
+      course: courseName,
+      code: 'CERT-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    });
+  }
+
+  closeCertificate() {
+    this.activeCertificate.set(null);
   }
 }

@@ -1,18 +1,35 @@
-<div class="grade-container">
-  <mat-card class="grade-card">
-    <mat-card-header>
-      <mat-card-title>Grade Submission Form</mat-card-title>
-      <mat-card-subtitle>Instructor Midterm & Final Grading</mat-card-subtitle>
-    </mat-card-header>
+<div class="grade-submission-wrapper">
+  <mat-card class="grade-station-card">
+    <div class="card-header-styled">
+      <div class="header-icon-box">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h1 class="header-title">Final Grade Evaluation</h1>
+        <p class="header-subtitle">Record and publish official student semester scores to database.</p>
+      </div>
+    </div>
 
-    <mat-card-content>
-      <!-- Quick Student Selector from Active Enrollments -->
-      <div style="margin-bottom: 20px; background: #f5f5f5; padding: 14px 16px; border-radius: 6px;">
-        <label style="display: block; font-weight: 500; font-size: 13px; color: #424242; margin-bottom: 8px;">
-          Quick Select from Enrolled Students:
-        </label>
-        <mat-form-field appearance="outline" class="full-width" style="margin-bottom: 0;">
-          <mat-label>Select Enrolled Student & Course</mat-label>
+    <mat-card-content class="station-content">
+      <!-- Quick Selector Panel -->
+      <div class="quick-selector-panel">
+        <div class="panel-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Select from Active Enrolled Students:</span>
+        </div>
+        <mat-form-field appearance="outline" class="select-field">
+          <mat-label>Choose Student & Course</mat-label>
           <mat-select (selectionChange)="onSelectEnrollment($event.value)">
             @for (enrollment of enrollmentStore.entities(); track enrollment.id) {
               <mat-option [value]="enrollment.id">
@@ -23,36 +40,40 @@
         </mat-form-field>
       </div>
 
-      <form [formGroup]="gradeForm" (ngSubmit)="onSubmit()">
-        <!-- Student ID -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Student ID</mat-label>
-          <input matInput type="number" formControlName="studentId" />
-          @if (gradeForm.controls.studentId.hasError('required')) {
-            <mat-error>Student ID is required</mat-error>
-          }
-          @if (gradeForm.controls.studentId.hasError('min')) {
-            <mat-error>Student ID must be at least 1</mat-error>
-          }
-        </mat-form-field>
+      <form [formGroup]="gradeForm" (ngSubmit)="onSubmit()" class="grade-form">
+        <div class="inputs-row">
+          <!-- Student ID -->
+          <mat-form-field appearance="outline" class="input-half">
+            <mat-label>Student ID Number</mat-label>
+            <input matInput type="number" formControlName="studentId" />
+            @if (gradeForm.controls.studentId.hasError('required')) {
+              <mat-error>Student ID is required</mat-error>
+            }
+            @if (gradeForm.controls.studentId.hasError('min')) {
+              <mat-error>Minimum ID is 1</mat-error>
+            }
+          </mat-form-field>
 
-        <!-- Course ID -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Course ID</mat-label>
-          <input matInput type="number" formControlName="courseId" />
-          @if (gradeForm.controls.courseId.hasError('required')) {
-            <mat-error>Course ID is required</mat-error>
-          }
-          @if (gradeForm.controls.courseId.hasError('min')) {
-            <mat-error>Course ID must be at least 1</mat-error>
-          }
-        </mat-form-field>
+          <!-- Course ID -->
+          <mat-form-field appearance="outline" class="input-half">
+            <mat-label>Course ID Number</mat-label>
+            <input matInput type="number" formControlName="courseId" />
+            @if (gradeForm.controls.courseId.hasError('required')) {
+              <mat-error>Course ID is required</mat-error>
+            }
+            @if (gradeForm.controls.courseId.hasError('min')) {
+              <mat-error>Minimum ID is 1</mat-error>
+            }
+          </mat-form-field>
+        </div>
 
-        <!-- Score -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Score (0-100 percentage)</mat-label>
-          <input matInput type="number" formControlName="score" />
-          <mat-hint style="font-size: 11px;">e.g. 88 -> converts to GPA and records into database</mat-hint>
+        <!-- Score Input -->
+        <mat-form-field appearance="outline" class="input-full">
+          <mat-label>Final Score (0 – 100%)</mat-label>
+          <input matInput type="number" formControlName="score" placeholder="e.g. 88" />
+          <mat-hint class="gpa-hint">
+            💡 Backend automatically computes 4.0 GPA scale (e.g. 90% = 3.6 GPA) & persists to PostgreSQL.
+          </mat-hint>
           @if (gradeForm.controls.score.hasError('required')) {
             <mat-error>Score is required</mat-error>
           }
@@ -61,36 +82,46 @@
           }
         </mat-form-field>
 
-        <!-- Loading Spinner -->
-        @if (isSubmitting()) {
-          <div class="spinner-container" style="display: flex; justify-content: center; margin: 16px 0;">
-            <mat-spinner diameter="32"></mat-spinner>
-          </div>
-        }
-
-        <!-- Status Message -->
+        <!-- Status Message Alert -->
         @if (submissionStatus()) {
           <div
-            class="status-message"
-            style="margin-top: 14px; padding: 12px 16px; border-radius: 4px; font-weight: 500;"
-            [style.background]="isSuccess() ? '#e8f5e9' : '#ffebee'"
-            [style.color]="isSuccess() ? '#2e7d32' : '#c62828'"
+            class="status-banner"
+            [class.status-success]="isSuccess()"
+            [class.status-error]="!isSuccess()"
           >
-            {{ submissionStatus() }}
+            <div class="banner-icon">
+              @if (isSuccess()) {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              } @else {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              }
+            </div>
+            <span>{{ submissionStatus() }}</span>
           </div>
         }
 
-        <mat-card-actions style="padding-left: 0; padding-top: 16px;">
-          <button
-            mat-flat-button
-            color="primary"
-            type="submit"
-            [disabled]="gradeForm.invalid || isSubmitting()"
-            class="submit-button"
-          >
-            {{ isSubmitting() ? 'Submitting...' : 'Submit Final Grade' }}
-          </button>
-        </mat-card-actions>
+        <!-- Submit Button -->
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="gradeForm.invalid || isSubmitting()"
+          class="btn-submit-grade"
+        >
+          @if (isSubmitting()) {
+            <mat-spinner diameter="20" strokeWidth="2.5"></mat-spinner>
+            <span>Persisting to Database...</span>
+          } @else {
+            <span>Publish Final Grade</span>
+          }
+        </button>
       </form>
     </mat-card-content>
   </mat-card>

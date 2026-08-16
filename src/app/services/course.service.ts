@@ -1,10 +1,19 @@
-import { Service, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Course, CourseDetail, PagedResponse } from '../models/course.model';
 
-@Service()
+export interface CreateCoursePayload {
+  code: string;
+  title: string;
+  maxCapacity: number;
+  instructorId?: number;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
 export class CourseService {
   private http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/courses`;
@@ -19,6 +28,10 @@ export class CourseService {
 
   getById(id: string) {
     return this.http.get<CourseDetail>(`${this.base}/${id}`);
+  }
+
+  create(payload: CreateCoursePayload) {
+    return this.http.post<Course>(this.base, payload);
   }
 
   delete(id: number | string) {

@@ -1,41 +1,64 @@
-<div class="enrollment-list-container">
-  <h2>Enrollment Records</h2>
+<div class="enrollments-page">
+  <div class="page-heading">
+    <div>
+      <h1 class="page-title">Student Enrollment Records</h1>
+      <p class="page-subtitle">Manage admissions, course allocations, and finalized grades.</p>
+    </div>
+    <div class="stats-pills">
+      <span class="count-pill pending-pill">
+        <strong>{{ store.pendingCount() }}</strong> Pending
+      </span>
+      <span class="count-pill approved-pill">
+        <strong>{{ store.approvedCount() }}</strong> Approved
+      </span>
+    </div>
+  </div>
 
   @if (store.isLoading()) {
-    <p>Loading enrollments...</p>
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <span>Synchronizing enrollment data...</span>
+    </div>
   }
 
   @if (store.error()) {
-    <p class="error">{{ store.error() }}</p>
+    <div class="error-banner">
+      <span>{{ store.error() }}</span>
+    </div>
   }
 
-  <div class="table-card">
-    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
-      <!-- Student Name Column -->
+  <div class="table-container-card">
+    <table mat-table [dataSource]="dataSource" matSort class="custom-table">
+      <!-- Student Column -->
       <ng-container matColumnDef="studentName">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Student</th>
         <td mat-cell *matCellDef="let row">
-          <div>
-            <strong>{{ row.studentName }}</strong>
-            <div style="font-size: 11px; color: #757575;">ID: STU-{{ row.studentId }}</div>
+          <div class="student-cell">
+            <div class="student-avatar-small">
+              {{ (row.studentName || 'S')[0].toUpperCase() }}
+            </div>
+            <div>
+              <strong class="cell-primary-text">{{ row.studentName }}</strong>
+              <div class="cell-sub-text">Student ID: #{{ row.studentId }}</div>
+            </div>
           </div>
         </td>
       </ng-container>
 
-      <!-- Course Name Column -->
+      <!-- Course & Details Column -->
       <ng-container matColumnDef="courseName">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Course & Details</th>
         <td mat-cell *matCellDef="let row">
-          <div>
-            <strong>{{ row.courseName }}</strong> (ID: {{ row.courseId }})
+          <div class="course-cell">
+            <strong class="cell-primary-text">{{ row.courseName }}</strong>
             @if (row.notes) {
-              <div style="font-size: 12px; color: #455a64; margin-top: 2px;">
-                <em>Note:</em> "{{ row.notes }}"
+              <div class="note-chip">
+                <span class="chip-label">Goal/Note:</span> "{{ row.notes }}"
               </div>
             }
             @if (row.backupCourses && row.backupCourses.length > 0) {
-              <div style="font-size: 11px; color: #0288d1; margin-top: 2px;">
-                <em>Backups:</em> {{ row.backupCourses.join(', ') }}
+              <div class="backup-chip">
+                <span class="chip-label">Backups:</span> {{ row.backupCourses.join(', ') }}
               </div>
             }
           </div>
@@ -46,7 +69,7 @@
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
         <td mat-cell *matCellDef="let row">
-          <span class="status-badge" [class]="row.status.toLowerCase()">
+          <span class="status-pill" [class]="'status-' + row.status.toLowerCase()">
             {{ row.status }}
           </span>
         </td>
@@ -54,16 +77,14 @@
 
       <!-- Grade Column -->
       <ng-container matColumnDef="grade">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Final Grade</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Evaluation</th>
         <td mat-cell *matCellDef="let row">
           @if (row.grade !== undefined && row.grade !== null) {
-            <span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px;">
-              {{ row.grade }}% ({{ row.letterGrade || 'A' }})
+            <span class="grade-badge">
+              <strong>{{ row.grade }}%</strong> (Grade {{ row.letterGrade || 'A' }})
             </span>
           } @else {
-            <span style="color: #9e9e9e; font-size: 12px; font-style: italic;">
-              Not Graded
-            </span>
+            <span class="not-graded-tag">Not Graded</span>
           }
         </td>
       </ng-container>
@@ -73,14 +94,18 @@
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let row">
           @if (row.status === 'Pending') {
-            <div style="display: flex; gap: 8px;">
-              <button mat-flat-button color="primary" (click)="store.approveEnrollment(row.id)">Approve</button>
-              <button mat-stroked-button color="warn" (click)="store.rejectEnrollment(row.id)">Reject</button>
+            <div class="actions-group">
+              <button mat-flat-button color="primary" class="btn-table-approve" (click)="store.approveEnrollment(row.id)">
+                Approve
+              </button>
+              <button mat-stroked-button class="btn-table-reject" (click)="store.rejectEnrollment(row.id)">
+                Reject
+              </button>
             </div>
           } @else if (row.status === 'Approved') {
-            <span class="action-confirmed">Enrolled</span>
+            <span class="confirmed-tag">Enrolled</span>
           } @else {
-            <span style="color: #c62828; font-size: 12px; font-weight: 500;">Rejected</span>
+            <span class="rejected-tag">Declined</span>
           }
         </td>
       </ng-container>
@@ -89,6 +114,6 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="custom-paginator"></mat-paginator>
   </div>
 </div>

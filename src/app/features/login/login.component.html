@@ -1,37 +1,75 @@
-<div class="login-container">
-  <mat-card class="login-card">
-    <mat-card-header>
-      <mat-card-title>{{ isRegisterMode() ? 'Create an Account' : 'Welcome to TMS' }}</mat-card-title>
-      <mat-card-subtitle>{{ isRegisterMode() ? 'Register with your institutional role' : 'Sign in to access your dashboard' }}</mat-card-subtitle>
-    </mat-card-header>
+<div class="auth-wrapper">
+  <div class="auth-card-backdrop"></div>
+  
+  <mat-card class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon-badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="auth-title">{{ isRegisterMode() ? 'Create an Account' : 'Welcome Back' }}</h1>
+      <p class="auth-subtitle">{{ isRegisterMode() ? 'Join the Training Management Platform' : 'Sign in to access your courses and portal' }}</p>
+    </div>
 
-    <mat-card-content>
+    <!-- Mode Switcher Tabs -->
+    <div class="auth-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="!isRegisterMode()"
+        (click)="isRegisterMode.set(false); error.set(null); successMessage.set(null);"
+      >
+        Sign In
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="isRegisterMode()"
+        (click)="isRegisterMode.set(true); error.set(null); successMessage.set(null);"
+      >
+        Register
+      </button>
+    </div>
+
+    <mat-card-content class="auth-body">
       @if (error()) {
-        <div class="error-message" style="color: #c62828; background: #ffebee; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; line-height: 1.4;">
-          {{ error() }}
+        <div class="feedback-banner error-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ error() }}</span>
         </div>
       }
 
       @if (successMessage()) {
-        <div class="success-message" style="color: #2e7d32; background: #e8f5e9; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; font-weight: 500;">
-          {{ successMessage() }}
+        <div class="feedback-banner success-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>{{ successMessage() }}</span>
         </div>
       }
 
-      <!-- LOGIN FORM -->
+      <!-- SIGN IN FORM -->
       @if (!isRegisterMode()) {
-        <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Username or Email</mat-label>
-            <input matInput formControlName="username" placeholder="e.g. admin or your email" />
+        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Username or Institutional Email</mat-label>
+            <input matInput formControlName="username" placeholder="e.g. admin or liya@cotbe.edu.et" autocomplete="username" />
             @if (loginForm.controls.username.hasError('required')) {
               <mat-error>Username or email is required</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="form-field">
             <mat-label>Password</mat-label>
-            <input matInput type="password" formControlName="password" />
+            <input matInput type="password" formControlName="password" placeholder="••••••••••••" autocomplete="current-password" />
             @if (loginForm.controls.password.hasError('required')) {
               <mat-error>Password is required</mat-error>
             }
@@ -42,12 +80,13 @@
             color="primary"
             type="submit"
             [disabled]="loginForm.invalid || isLoading()"
-            class="submit-button"
+            class="submit-btn"
           >
             @if (isLoading()) {
-              <mat-spinner diameter="20"></mat-spinner>
+              <mat-spinner diameter="20" strokeWidth="2.5"></mat-spinner>
+              <span>Authenticating...</span>
             } @else {
-              Sign In
+              <span>Sign In to Portal</span>
             }
           </button>
         </form>
@@ -55,47 +94,47 @@
 
       <!-- REGISTER FORM -->
       @if (isRegisterMode()) {
-        <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
-          <div style="display: flex; gap: 12px;">
-            <mat-form-field appearance="outline" style="flex: 1;">
+        <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
               <mat-label>First Name</mat-label>
               <input matInput formControlName="firstName" placeholder="e.g. Abebe" />
               @if (registerForm.controls.firstName.hasError('required')) {
-                <mat-error>Required</mat-error>
+                <mat-error>First name required</mat-error>
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline" style="flex: 1;">
+            <mat-form-field appearance="outline" class="form-field">
               <mat-label>Last Name</mat-label>
               <input matInput formControlName="lastName" placeholder="e.g. Bikila" />
               @if (registerForm.controls.lastName.hasError('required')) {
-                <mat-error>Required</mat-error>
+                <mat-error>Last name required</mat-error>
               }
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email Address</mat-label>
-            <input matInput type="email" formControlName="email" placeholder="name@cotbe.edu.et" />
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Institutional Email Address</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="name@cotbe.edu.et" autocomplete="email" />
             @if (registerForm.controls.email.hasError('required') || registerForm.controls.email.hasError('email')) {
               <mat-error>Valid email is required</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="form-field">
             <mat-label>Password</mat-label>
-            <input matInput type="password" formControlName="password" />
-            <mat-hint style="font-size: 11px;">Min 12 characters, uppercase, number, & symbol (e.g. Password1234!)</mat-hint>
+            <input matInput type="password" formControlName="password" placeholder="Min 12 chars" autocomplete="new-password" />
+            <mat-hint class="password-hint">Min 12 characters, uppercase, digit, & symbol (e.g. Password1234!)</mat-hint>
             @if (registerForm.controls.password.hasError('required')) {
               <mat-error>Password is required</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" style="margin-top: 12px;">
-            <mat-label>Role</mat-label>
+          <mat-form-field appearance="outline" class="form-field" style="margin-top: 14px;">
+            <mat-label>Account Role</mat-label>
             <mat-select formControlName="role">
-              <mat-option value="Student">Student</mat-option>
-              <mat-option value="Instructor">Instructor</mat-option>
+              <mat-option value="Student">Student (Enroll in Courses, Track Progress)</mat-option>
+              <mat-option value="Instructor">Instructor (Manage Enrollments, Submit Grades)</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -104,22 +143,17 @@
             color="primary"
             type="submit"
             [disabled]="registerForm.invalid || isLoading()"
-            class="submit-button"
+            class="submit-btn"
           >
             @if (isLoading()) {
-              <mat-spinner diameter="20"></mat-spinner>
+              <mat-spinner diameter="20" strokeWidth="2.5"></mat-spinner>
+              <span>Creating Account...</span>
             } @else {
-              Register Account
+              <span>Complete Registration</span>
             }
           </button>
         </form>
       }
-
-      <div style="margin-top: 16px; text-align: center;">
-        <button mat-button type="button" (click)="toggleMode()">
-          {{ isRegisterMode() ? 'Already have an account? Sign In' : "Don't have an account? Register" }}
-        </button>
-      </div>
     </mat-card-content>
   </mat-card>
 </div>

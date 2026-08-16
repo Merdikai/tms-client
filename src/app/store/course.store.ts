@@ -14,7 +14,7 @@ import {
 } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, concatMap, tap, catchError, EMPTY } from 'rxjs';
-import { CourseService } from '../services/course.service';
+import { CourseService, CreateCoursePayload } from '../services/course.service';
 import { Course } from '../models/course.model';
 
 export const CourseStore = signalStore(
@@ -51,6 +51,22 @@ export const CourseStore = signalStore(
           )
         )
       ),
+
+      // Create new course directly in PostgreSQL database
+      createCourse: (payload: CreateCoursePayload, onSuccess?: () => void, onError?: (err: any) => void) => {
+        patchState(store, { isLoading: true, error: null });
+        courseService.create(payload).subscribe({
+          next: (created) => {
+            patchState(store, addEntity(created), { isLoading: false });
+            if (onSuccess) onSuccess();
+          },
+          error: (err) => {
+            const errorMsg = err.error?.detail || err.error?.title || 'Failed to create course';
+            patchState(store, { isLoading: false, error: errorMsg });
+            if (onError) onError(errorMsg);
+          }
+        });
+      },
 
       // Optimistic Delete with Snapshot Rollback
       deleteCourse(id: number) {
