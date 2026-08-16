@@ -1,36 +1,37 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   Validators,
   ReactiveFormsModule,
-  FormArray,
 } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { EnrollmentStore } from '../../store/enrollment.store';
+import { CourseStore } from '../../store/course.store';
+import { AuthService } from '../../services/auth.service';
+import { Enrollment } from '../../models/enrollment.model';
 
 @Component({
   selector: 'app-enrollment-form',
   standalone: true,
-  imports: [ReactiveFormsModule], // Required – without this, Angular doesn't recognize form directives
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './enrollment-form.component.html',
   styleUrl: './enrollment-form.component.scss',
 })
-export class EnrollmentFormComponent {
-  // inject(FormBuilder) is Angular's way of requesting a service.
-  // Similar to constructor injection in .NET (like inject ILogger in a C# class)
+export class EnrollmentFormComponent implements OnInit {
   private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private store = inject(EnrollmentStore);
+  private courseStore = inject(CourseStore);
+  private auth = inject(AuthService);
 
-  // A signal to track whether the form was submitted (for showing a success message)
   submitted = signal(false);
+  createdEnrollment = signal<Enrollment | null>(null);
 
-  // fb.nonNullable.group({...}) creates a form object in TypeScript code.
-  // "nonNullable" ensures all values are typed as 'string' instead of 'string | null'
-  // This saves you from writing null-checking code everywhere.
-  //
-  // Each field is defined as: [defaultValue, validators]
-  // Validators are rules that the value must pass before the form is considered valid.
   form = this.fb.nonNullable.group({
     studentId: [
-      '',
+      'STU-1001',
       [
         Validators.required,
         Validators.pattern('^STU-[0-9]{4}$'), // Format: STU-1234
@@ -39,16 +40,25 @@ export class EnrollmentFormComponent {
     courseId: ['', Validators.required],
     term: ['Fall 2026', Validators.required],
     notes: [''],
-    backupCourses: this.fb.array<FormControl<string>>([]), // Starts empty, user adds rows dynamically
+    backupCourses: this.fb.array<FormControl<string>>([]),
   });
 
-  // "get backups()" is a TypeScript property accessor – it looks like a variable but runs a function.
-  // This is a shortcut so you can write "this.backups" instead of "this.form.controls.backupCourses"
+  ngOnInit() {
+    this.route.queryParams.subscribe((params) => {
+      if (params['courseId']) {
+        this.form.controls.courseId.setValue(params['courseId'].toString());
+      }
+    });
+
+    if (this.courseStore.entities().length === 0) {
+      this.courseStore.loadCourses();
+    }
+  }
+
   get backups() {
     return this.form.controls.backupCourses;
   }
 
-  // Adds a new empty text input to the backup courses array
   addBackup() {
     this.backups.push(
       this.fb.control('', {
@@ -58,22 +68,54 @@ export class EnrollmentFormComponent {
     );
   }
 
-  // Removes a specific backup course row by its position in the array
   removeBackup(index: number) {
     this.backups.removeAt(index);
   }
 
   submit() {
     if (this.form.valid) {
-      // getRawValue() extracts the full form data as a JSON object.
-      // IMPORTANT: Do NOT use .value here. If any field is disabled, .value silently
-      // drops that field from the object. getRawValue() always includes everything.
       const payload = this.form.getRawValue();
-      console.log('Enrollment payload:', payload);
-      this.submitted.set(true);
+      const courseIdNum = Number(payload.courseId);
+      const course = this.courseStore.entities().find((c) => c.id === courseIdNum);
+      const courseName = course ? `${course.code} - ${course.title}` : `Course #${courseIdNum}`;
+      const currentUser = this.auth.currentUser();
+      const studentName = currentUser?.displayName || 'Student User';
+
+      const backupList = payload.backupCourses.filter((b) => !!b && b.trim().length > 0);
+
+      const localEnrollment: Enrollment = {
+        id: 'ENR-' + Date.now().toString().slice(-6),
+        studentId: Number(payload.studentId.replace('STU-', '')) || 101,
+        studentName: studentName,
+        courseId: courseIdNum,
+        courseName: courseName,
+        status: 'Pending',
+        enrolledAt: new Date().toISOString(),
+        notes: payload.notes || undefined,
+        backupCourses: backupList.length > 0 ? backupList : undefined,
+      };
+
+      // Call database API endpoint asynchronously to persist in PostgreSQL and broadcast to SignalR
+      this.store.addEnrollmentAsync({
+        studentId: payload.studentId,
+        studentName: studentName,
+        courseId: courseIdNum,
+        term: payload.term,
+        notes: payload.notes,
+        backupCourses: backupList,
+      }).subscribe({
+        next: (created) => {
+          this.createdEnrollment.set(created || localEnrollment);
+          this.submitted.set(true);
+        },
+        error: () => {
+          // Fallback to local store if backend unreachable
+          this.store.addEnrollment(localEnrollment);
+          this.createdEnrollment.set(localEnrollment);
+          this.submitted.set(true);
+        }
+      });
     } else {
-      // markAllAsTouched() forces Angular to show validation errors on every field.
-      // Without this call, Angular only shows errors on fields the user has clicked on.
       this.form.markAllAsTouched();
     }
   }

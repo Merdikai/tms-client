@@ -1,71 +1,230 @@
-.dashboard-header {
-  padding: 0 1.5rem;
-}
-
-.kpi-row {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
-
-.kpi-card {
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  background: #1e293b;
-  color: #e2e8f0;
+.instructor-hub {
   display: flex;
   flex-direction: column;
-  min-width: 160px;
+  gap: 32px;
+}
 
-  &.pending {
-    border-left: 4px solid #d97706;
+.hub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hub-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.03em;
+}
+
+.hub-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-action-primary {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
   }
 }
 
-.kpi-value {
-  font-size: 2rem;
-  font-weight: 700;
+.btn-action-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-surface-subtle);
+    border-color: var(--primary);
+  }
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  gap: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-focus);
+  }
+}
+
+.kpi-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.pending-icon {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  &.approved-icon {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+}
+
+.kpi-data {
+  display: flex;
+  flex-direction: column;
 }
 
 .kpi-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.kpi-value {
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+
+  &.pending-val {
+    color: var(--warning);
+  }
+
+  &.approved-val {
+    color: var(--success);
+  }
+}
+
+.kpi-trend {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+
+  &.pending-trend {
+    color: var(--warning-text);
+  }
+
+  &.approved-trend {
+    color: var(--success-text);
+  }
+}
+
+/* Analytics Card */
+.analytics-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.chart-subtitle {
   font-size: 0.85rem;
-  color: #94a3b8;
-  margin-top: 0.25rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
-.chart-section {
-  margin-top: 2rem;
-  padding: 0 1.5rem;
+.chart-container {
+  min-height: 280px;
 }
 
-/* 
- * NOTE: This min-height prevents a CLS (Cumulative Layout Shift) bug.
- * The @defer (on viewport) trigger uses the browser's IntersectionObserver.
- * If .skeleton-chart renders at 0px height, the observer immediately reports
- * it as "in viewport" - and the deferred chunk downloads on page load,
- * defeating the entire purpose of code splitting.
- * 
- * Setting min-height reserves visual space, ensures the element starts
- * off-screen on most devices, and keeps the page layout stable when
- * the real chart swaps in.
- */
 .skeleton-chart {
-  min-height: 250px;
+  min-height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1e293b;
-  border: 2px dashed #334155;
-  border-radius: 8px;
-  color: #64748b;
-  font-size: 1rem;
+  background: var(--bg-surface-subtle);
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
-.spinner {
-  min-height: 250px;
+.spinner-box {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.chart-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.error-chart {
+  min-height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
-  font-size: 1rem;
+  color: var(--danger);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -1,27 +1,91 @@
-<!-- Renders instantly on any connection speed -->
-<div class="dashboard-header">
-  <h1>Instructor Command Center</h1>
-  <div class="kpi-row">
-    <div class="kpi-card">
-      <span class="kpi-value">{{ store.entities().length }}</span>
-      <span class="kpi-label">Total Enrollments</span>
+<div class="instructor-hub">
+  <!-- Header & KPI Section -->
+  <div class="hub-header">
+    <div>
+      <h1 class="hub-title">Instructor Command Center</h1>
+      <p class="hub-subtitle">Real-time enrollment diagnostics, status breakdowns, and cohort metrics.</p>
     </div>
-    <div class="kpi-card pending">
-      <span class="kpi-value">{{ store.pendingCount() }}</span>
-      <span class="kpi-label">Pending Approval</span>
+    <div class="header-actions">
+      <a routerLink="/enrollments" class="btn-action-primary">View Enrollments Grid</a>
+      <a routerLink="/grade-submission" class="btn-action-secondary">Grade Submission</a>
     </div>
   </div>
-</div>
 
-<!-- DEFERRED UI: The chart code lives in a separate .js chunk file -->
-<div class="chart-section">
-  @defer (on viewport; prefetch on idle(500)) {
-    <tms-analytics-chart [data]="store.entities()" />
-  } @placeholder {
-    <div class="skeleton-chart">Scroll down to view analytics...</div>
-  } @loading (minimum 500ms) {
-    <div class="spinner">Downloading chart engine...</div>
-  } @error {
-    <p>Failed to load chart. Check your connection.</p>
-  }
+  <!-- KPI Stat Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card total-card">
+      <div class="kpi-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-label">Total Student Enrollments</span>
+        <span class="kpi-value">{{ store.entities().length }}</span>
+        <span class="kpi-trend">Across All Course Sections</span>
+      </div>
+    </div>
+
+    <div class="kpi-card pending-card">
+      <div class="kpi-icon-box pending-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-label">Pending Approval Requests</span>
+        <span class="kpi-value pending-val">{{ store.pendingCount() }}</span>
+        <span class="kpi-trend pending-trend">Requires Instructor Attention</span>
+      </div>
+    </div>
+
+    <div class="kpi-card approved-card">
+      <div class="kpi-icon-box approved-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-label">Approved & Active Students</span>
+        <span class="kpi-value approved-val">{{ store.approvedCount() }}</span>
+        <span class="kpi-trend approved-trend">Confirmed Admissions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Chart Section -->
+  <section class="analytics-card">
+    <div class="chart-header">
+      <div>
+        <h2 class="chart-title">Enrollment Distribution & Capacity Status</h2>
+        <p class="chart-subtitle">Real-time enrollment status breakdown across current academic term.</p>
+      </div>
+    </div>
+
+    <!-- DEFERRED UI: The chart code lives in a separate .js chunk file -->
+    <div class="chart-container">
+      @defer (on viewport; prefetch on idle(500)) {
+        <tms-analytics-chart [data]="store.entities()" />
+      } @placeholder {
+        <div class="skeleton-chart">
+          <div class="skeleton-shimmer"></div>
+          <span>Scroll down to initialize dynamic analytics engine...</span>
+        </div>
+      } @loading (minimum 500ms) {
+        <div class="spinner-box">
+          <div class="chart-spinner"></div>
+          <span>Rendering analytics visualization...</span>
+        </div>
+      } @error {
+        <div class="error-chart">
+          <span>Failed to load chart engine. Please check network connection.</span>
+        </div>
+      }
+    </div>
+  </section>
 </div>

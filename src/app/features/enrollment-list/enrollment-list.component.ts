@@ -15,7 +15,7 @@ import { Enrollment } from '../../models/enrollment.model';
 })
 export class EnrollmentListComponent {
   store = inject(EnrollmentStore);
-  displayedColumns = ['studentName', 'courseName', 'status', 'actions'];
+  displayedColumns = ['studentName', 'courseName', 'status', 'grade', 'actions'];
 
   // MatTableDataSource bridges store data into Material's rendering pipeline
   dataSource = new MatTableDataSource<Enrollment>();

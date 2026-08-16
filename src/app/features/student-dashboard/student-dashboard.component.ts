@@ -1,22 +1,64 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
 import { CourseCardComponent } from '../../ui/course-card/course-card.component';
 import { Course } from '../../models/course.model';
 import { CourseService } from '../../services/course.service';
-import { RouterLink } from "@angular/router";
+import { AuthService } from '../../services/auth.service';
+import { EnrollmentStore } from '../../store/enrollment.store';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CourseCardComponent, RouterLink],
+  imports: [CommonModule, CourseCardComponent],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.scss',
 })
-export class StudentDashboardComponent {
+export class StudentDashboardComponent implements OnInit {
   private api = inject(CourseService);
+  auth = inject(AuthService);
+  private router = inject(Router);
+  enrollmentStore = inject(EnrollmentStore);
 
-  studentName = signal('Liya Kebede');
-  earnedCredits = signal(45);
+  studentName = computed(() => this.auth.currentUser()?.displayName || 'Student');
+
+  transcriptStatus = signal<string | null>(null);
+  activeCertificate = signal<{ course: string; code: string; date: string } | null>(null);
+
+  ngOnInit() {
+    this.enrollmentStore.loadEnrollments();
+  }
+
+  isPrivileged = computed(() => {
+    return this.auth.hasRole('Admin') || this.auth.hasRole('Instructor');
+  });
+
+  // Students see ONLY their own records, while Admin/Instructors see all records
+  myEnrollments = computed(() => {
+    const user = this.auth.currentUser();
+    if (!user) return [];
+
+    if (this.isPrivileged()) {
+      return this.enrollmentStore.entities();
+    }
+
+    const currentDisplayName = (user.displayName || '').toLowerCase().trim();
+    const currentEmailPrefix = (user.email || '').split('@')[0].toLowerCase().trim();
+
+    return this.enrollmentStore.entities().filter((e) => {
+      const eName = (e.studentName || '').toLowerCase().trim();
+      return (
+        eName === currentDisplayName ||
+        (currentEmailPrefix && eName.includes(currentEmailPrefix))
+      );
+    });
+  });
+
+  earnedCredits = computed(() => {
+    const approved = this.myEnrollments().filter((e) => e.status === 'Approved');
+    return 45 + approved.length * 3;
+  });
 
   graduationStatus = computed(() => {
     return this.earnedCredits() >= 120 ? 'Eligible for Graduation' : 'In Progress';
@@ -29,11 +71,28 @@ export class StudentDashboardComponent {
   });
 
   registerForClass() {
-    this.earnedCredits.update((c) => c + 3);
+    this.router.navigate(['/enroll']);
   }
 
   handleEnroll(course: Course) {
     this.selectedCourse.set(course);
-    console.log('Enrollment requested for:', course.title);
+    this.router.navigate(['/enroll'], { queryParams: { courseId: course.id } });
+  }
+
+  requestTranscript() {
+    const reportId = 'TRN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    this.transcriptStatus.set(`Transcript Request Queued: ${reportId} (Status: Ready / Complete)`);
+  }
+
+  viewCertificate(courseName: string) {
+    this.activeCertificate.set({
+      course: courseName,
+      code: 'CERT-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    });
+  }
+
+  closeCertificate() {
+    this.activeCertificate.set(null);
   }
 }

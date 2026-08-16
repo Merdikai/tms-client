@@ -1,34 +1,226 @@
-<div class="dashboard">
-  <h1>Welcome, {{ studentName() }}</h1>
-  <p>Credits Earned: {{ earnedCredits() }}</p>
-  <p>Graduation Status: {{ graduationStatus() }}</p>
-  <button (click)="registerForClass()">Register for a Class (+3 credits)</button>
-</div>
+<div class="student-hub">
+  <!-- Top Banner & Welcome -->
+  <div class="hub-header">
+    <div>
+      <h1 class="welcome-heading">Welcome back, <span class="highlight">{{ studentName() }}</span> 👋</h1>
+      <p class="welcome-sub">Track your active enrollments, course grades, official transcripts, and degree progress.</p>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button (click)="requestTranscript()" class="btn-secondary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Request Official Transcript</span>
+      </button>
 
-<h2>Course Catalog</h2>
-
-@if (coursesResource.isLoading()) {
-  <div class="spinner">Loading courses...</div>
-} @else if (coursesResource.error()) {
-  <div class="error">Failed to load courses. Check API connection.</div>
-} @else {
-  <div class="grid">
-    @for (course of coursesResource.value()!; track course.id) {
-      <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
-    } @empty {
-      <p>No courses are available this term.</p>
-    }
+      <button (click)="registerForClass()" class="btn-primary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Register for Class (+3 Credits)</span>
+      </button>
+    </div>
   </div>
-}
 
-@if (selectedCourse(); as picked) {
-  <p class="selection-hint" role="status">
-    Last enrollment request: <strong>{{ picked.title }}</strong> ({{ picked.code }})
-  </p>
-}
+  @if (transcriptStatus()) {
+    <div class="transcript-banner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>{{ transcriptStatus() }}</span>
+    </div>
+  }
 
-<nav>
-  <a routerLink="/dashboard">Dashboard</a> |
-  <a routerLink="/enroll">Enroll in a Course</a> |
-  <a routerLink="/enrollments">Manage Enrollments</a>   <!-- ← NEW -->
-</nav>
+  <!-- Metric Stat Cards Grid -->
+  <div class="stats-grid">
+    <!-- Stat 1: Credits Earned -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper credits-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Academic Credits Earned</span>
+        <div class="stat-value">{{ earnedCredits() }} <span class="stat-target">/ 120 Total</span></div>
+        <!-- Progress Bar -->
+        <div class="stat-progress-track">
+          <div class="stat-progress-bar" [style.width.%]="(earnedCredits() / 120) * 100"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 2: Graduation Status -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper status-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Graduation Standing</span>
+        <div class="stat-value status-text" [class.grad-ready]="earnedCredits() >= 120">
+          {{ graduationStatus() }}
+        </div>
+        <span class="stat-note">{{ earnedCredits() >= 120 ? 'All requirements fulfilled' : (120 - earnedCredits()) + ' credits remaining' }}</span>
+      </div>
+    </div>
+
+    <!-- Stat 3: Enrolled Courses -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper courses-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Enrolled Modules</span>
+        <div class="stat-value">{{ myEnrollments().length }} Active</div>
+        <span class="stat-note">Institutional Term 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic Grades & Enrolled Courses Section -->
+  <section class="dashboard-section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">
+          {{ isPrivileged() ? 'All Student Enrolled Courses & Academic Grades' : 'My Enrolled Courses & Academic Record' }}
+        </h2>
+        <p class="section-sub">
+          {{ isPrivileged() ? 'Administrative overview of student enrollments and graded evaluations.' : 'Official course registration records and submitted semester grades.' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="records-container">
+      @for (enrollment of myEnrollments(); track enrollment.id) {
+        <div class="enrollment-row">
+          <div class="enrollment-main">
+            <div class="course-badge-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="course-name-line">
+                <strong class="course-name">{{ enrollment.courseName }}</strong>
+                @if (isPrivileged()) {
+                  <span class="student-tag">
+                    Student: {{ enrollment.studentName }} (ID: {{ enrollment.studentId }})
+                  </span>
+                }
+              </div>
+              <div class="meta-line">
+                <span>Enrolled on {{ enrollment.enrolledAt | date:'mediumDate' }}</span>
+                <span>•</span>
+                <span>Reference: {{ enrollment.id }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="enrollment-badges">
+            <!-- Status Badge -->
+            <span
+              class="badge-pill"
+              [class.badge-approved]="enrollment.status === 'Approved'"
+              [class.badge-pending]="enrollment.status === 'Pending'"
+              [class.badge-rejected]="enrollment.status === 'Rejected'"
+            >
+              {{ enrollment.status }}
+            </span>
+
+            <!-- Final Grade Badge -->
+            @if (enrollment.grade !== undefined && enrollment.grade !== null) {
+              <div class="grade-pill">
+                <span class="grade-score">{{ enrollment.grade }}%</span>
+                <span class="grade-letter">Grade {{ enrollment.letterGrade || 'A' }}</span>
+              </div>
+
+              <!-- Certificate Button -->
+              <button (click)="viewCertificate(enrollment.courseName)" class="btn-cert">
+                🎓 Certificate
+              </button>
+            } @else {
+              <span class="grade-pending-pill">
+                Grade In Progress
+              </span>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state-box">
+          <div class="empty-icon">📚</div>
+          <h3>No Active Enrollments Found</h3>
+          <p>You haven't enrolled in any courses for this term yet. Select a course from the catalog below.</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Certificate Modal -->
+  @if (activeCertificate(); as cert) {
+    <div class="modal-backdrop" (click)="closeCertificate()">
+      <div class="cert-modal-card" (click)="$event.stopPropagation()">
+        <div class="cert-frame">
+          <div class="cert-seal">🏅</div>
+          <h2 class="cert-title">Certificate of Completion</h2>
+          <p class="cert-body-text">This is to officially certify that</p>
+          <h3 class="cert-recipient">{{ studentName() }}</h3>
+          <p class="cert-body-text">has successfully completed all requirements and evaluations for</p>
+          <h4 class="cert-course-name">{{ cert.course }}</h4>
+          <div class="cert-footer">
+            <div>Issued: <strong>{{ cert.date }}</strong></div>
+            <div>Certificate ID: <strong>{{ cert.code }}</strong></div>
+          </div>
+        </div>
+        <button (click)="closeCertificate()" class="btn-close-cert">Close Certificate</button>
+      </div>
+    </div>
+  }
+
+  <!-- Available Course Catalog Section -->
+  <section class="dashboard-section catalog-section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Available Course Catalog</h2>
+        <p class="section-sub">Browse available academic modules for this term and reserve your seat.</p>
+      </div>
+    </div>
+
+    @if (coursesResource.isLoading()) {
+      <div class="loading-state">
+        <div class="loading-spinner-circle"></div>
+        <span>Retrieving course catalog...</span>
+      </div>
+    } @else if (coursesResource.error()) {
+      <div class="error-state-box">
+        <span>Unable to connect to course service. Please check API connection.</span>
+      </div>
+    } @else {
+      <div class="course-grid">
+        @for (course of coursesResource.value()!; track course.id) {
+          <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
+        } @empty {
+          <p>No courses are available for registration this term.</p>
+        }
+      </div>
+    }
+
+    @if (selectedCourse(); as picked) {
+      <div class="selection-banner">
+        <span>Selected course: <strong>{{ picked.title }}</strong> ({{ picked.code }})</span>
+      </div>
+    }
+  </section>
+</div>

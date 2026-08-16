@@ -1,11 +1,14 @@
-import { Service, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface TmsUser {
+  userId?: string;
+  email?: string;
   displayName: string;
   role: string;
+  roles?: string[];
 }
 
 export interface LoginRequest {
@@ -13,7 +16,17 @@ export interface LoginRequest {
   password: string;
 }
 
-@Service()
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
 export class AuthService {
   private http = inject(HttpClient);
 
@@ -35,6 +48,12 @@ export class AuthService {
     );
 
     this.currentUser.set(user);
+  }
+
+  async register(data: RegisterRequest): Promise<void> {
+    await firstValueFrom(
+      this.http.post<void>(`${environment.apiUrl}/auth/register`, data)
+    );
   }
 
   async logout(): Promise<void> {

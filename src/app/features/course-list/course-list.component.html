@@ -1,0 +1,175 @@
+<div class="catalog-page">
+  <!-- Page Header -->
+  <div class="page-heading">
+    <div>
+      <h1 class="page-title">Institutional Course Catalog</h1>
+      <p class="page-subtitle">Explore accredited courses, term schedules, and seat capacity status.</p>
+    </div>
+    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+      <div class="header-badge">
+        <span class="total-courses-pill">
+          <strong>{{ store.courseCount() }}</strong> Modules Offered
+        </span>
+      </div>
+
+      <!-- Instructor / Admin Create Course Button -->
+      @if (isPrivileged()) {
+        <button (click)="openCreateModal()" class="btn-create-course">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Add New Course</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (store.isLoading()) {
+    <div class="loading-box">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading course modules...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (store.error()) {
+    <div class="error-banner">
+      <span class="error-text">⚠️ {{ store.error() }}</span>
+      <button mat-button color="warn" (click)="store.loadCourses()">Retry Connection</button>
+    </div>
+  }
+
+  <!-- Course Grid -->
+  <div class="courses-grid">
+    @for (course of store.entities(); track course.id) {
+      <mat-card class="course-module-card">
+        <mat-card-header class="card-header">
+          <div class="code-pill">{{ course.code }}</div>
+          <mat-card-title class="course-title">{{ course.title }}</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content class="card-body">
+          <div class="capacity-row">
+            <span class="capacity-label">Seat Availability</span>
+            <span class="capacity-val"><strong>{{ course.enrollmentCount }}</strong> / {{ course.maxCapacity }} Seats</span>
+          </div>
+
+          <div class="capacity-track">
+            <div
+              class="capacity-fill"
+              [style.width.%]="(course.enrollmentCount / (course.maxCapacity || 1)) * 100"
+              [class.fill-full]="course.enrollmentCount >= course.maxCapacity"
+            ></div>
+          </div>
+
+          <div class="tags-row">
+            <span
+              class="status-chip"
+              [class.chip-full]="course.enrollmentCount >= course.maxCapacity"
+            >
+              {{ course.enrollmentCount >= course.maxCapacity ? 'Capacity Filled' : 'Open for Enrollment' }}
+            </span>
+            <span class="credits-chip">3 Credits</span>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions class="card-actions">
+          <!-- Instructor / Admin only: Delete button -->
+          @if (auth.hasRole('Instructor') || auth.hasRole('Admin')) {
+            <button
+              mat-stroked-button
+              color="warn"
+              (click)="onDelete(course.id, course.title)"
+              class="btn-delete"
+            >
+              Delete Course
+            </button>
+          }
+
+          <!-- Student: Enroll button -->
+          @if (auth.hasRole('Student')) {
+            <button
+              mat-flat-button
+              color="primary"
+              [routerLink]="['/enroll']"
+              [queryParams]="{ courseId: course.id }"
+              class="btn-enroll-card"
+            >
+              Enroll Now
+            </button>
+          }
+        </mat-card-actions>
+      </mat-card>
+    } @empty {
+      @if (!store.isLoading()) {
+        <div class="empty-state-box">
+          <p>No active courses found in the catalog.</p>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Create Course Modal -->
+  @if (showCreateModal()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Create New Academic Course</h2>
+          <button (click)="closeCreateModal()" class="btn-close-modal">✕</button>
+        </div>
+
+        @if (modalError()) {
+          <div class="modal-error-alert">
+            {{ modalError() }}
+          </div>
+        }
+
+        <div class="modal-form-body">
+          <div class="form-group">
+            <label>Course Code (e.g. CS-301)</label>
+            <input
+              type="text"
+              [(ngModel)]="newCourse.code"
+              placeholder="e.g. CS-301"
+              class="input-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Course Title</label>
+            <input
+              type="text"
+              [(ngModel)]="newCourse.title"
+              placeholder="e.g. Cloud Computing & Distributed Systems"
+              class="input-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Max Seat Capacity</label>
+            <input
+              type="number"
+              [(ngModel)]="newCourse.maxCapacity"
+              min="5"
+              max="200"
+              class="input-control"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button (click)="closeCreateModal()" class="btn-cancel">Cancel</button>
+          <button
+            (click)="submitCreateCourse()"
+            [disabled]="isSubmitting()"
+            class="btn-submit-course"
+          >
+            {{ isSubmitting() ? 'Saving to Database...' : 'Create Course' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
