@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+﻿import { computed, inject } from '@angular/core';
 import {
   signalStore,
   withComputed,
@@ -9,8 +9,8 @@ import {
 import {
   withEntities,
   setAllEntities,
-  removeEntity,
   addEntity,
+  removeEntity,
 } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, concatMap, tap, catchError, EMPTY } from 'rxjs';
@@ -22,97 +22,75 @@ export const CourseStore = signalStore(
   withState({
     isLoading: false,
     error: null as string | null,
+    selectedCourseId: null as number | null,
   }),
   withEntities<Course>(),
   withComputed((store) => ({
+    totalCourses: computed(() => store.entities().length),
     courseCount: computed(() => store.entities().length),
+    availableCourses: computed(() =>
+      store.entities().filter((c) => c.enrollmentCount < c.maxCapacity)
+    ),
+    fullCourses: computed(() =>
+      store.entities().filter((c) => c.enrollmentCount >= c.maxCapacity)
+    ),
+    selectedCourse: computed(() => {
+      const id = store.selectedCourseId();
+      return id ? store.entityMap()[id] ?? null : null;
+    }),
   })),
-  withMethods((store) => {
-    const courseService = inject(CourseService);
-
-    return {
-      // Load all courses
-      loadCourses: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { isLoading: true, error: null })),
-          concatMap(() =>
-            courseService.getAll().pipe(
-              tap((rows) =>
-                patchState(store, setAllEntities(rows), { isLoading: false })
-              ),
-              catchError((err) => {
-                patchState(store, {
-                  isLoading: false,
-                  error: err.error?.detail || 'Failed to load courses',
-                });
-                return EMPTY;
-              })
-            )
-          )
-        )
-      ),
-
-      // Create new course directly in PostgreSQL database
-      createCourse: (payload: CreateCoursePayload, onSuccess?: () => void, onError?: (err: any) => void) => {
-        patchState(store, { isLoading: true, error: null });
-        courseService.create(payload).subscribe({
-          next: (created) => {
-            patchState(store, addEntity(created), { isLoading: false });
-            if (onSuccess) onSuccess();
-          },
-          error: (err) => {
-            const errorMsg = err.error?.detail || err.error?.title || 'Failed to create course';
-            patchState(store, { isLoading: false, error: errorMsg });
-            if (onError) onError(errorMsg);
-          }
-        });
-      },
-
-      // Optimistic Delete with Snapshot Rollback
-      deleteCourse(id: number) {
-        // 1. Take snapshot of current entities BEFORE mutating local state
-        const previousSnapshot = store.entities();
-
-        // 2. Instant visual feedback - remove entity immediately from Local UI
-        patchState(store, removeEntity(id), { error: null });
-
-        // 3. Dispatch API call to backend server
-        courseService
-          .delete(id)
-          .pipe(
+  withMethods((store, api = inject(CourseService)) => ({
+    loadCourses: rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { isLoading: true, error: null })),
+        concatMap(() =>
+          api.getAll().pipe(
+            tap((courses) => {
+              patchState(store, setAllEntities(courses), { isLoading: false });
+            }),
             catchError((err) => {
-              // 4. Server rejected request - restore previous snapshot and set error message
-              patchState(store, setAllEntities(previousSnapshot));
               patchState(store, {
-                error:
-                  err.error?.detail ||
-                  'Cannot delete course: active student enrollments exist.',
+                isLoading: false,
+                error: err.error?.detail || err.message || 'Failed to load courses',
               });
               return EMPTY;
             })
           )
-          .subscribe();
-      },
-
-      // Add a new course (optimistic)
-      addCourse: rxMethod<Course>(
-        pipe(
-          tap((course) => patchState(store, addEntity(course))),
-          concatMap((course) =>
-            courseService.getAll().pipe(
-              tap(() => console.log('Course added:', course.title)),
-              catchError((err) => {
-                // Rollback on failure
-                patchState(store, removeEntity(course.id));
-                patchState(store, {
-                  error: err.error?.detail || 'Failed to add course',
-                });
-                return EMPTY;
-              })
-            )
-          )
         )
-      ),
-    };
-  })
+      )
+    ),
+
+    createCourse(payload: CreateCoursePayload, onSuccess?: () => void, onError?: (err: any) => void) {
+      api.create(payload).subscribe({
+        next: (created) => {
+          if (created) {
+            patchState(store, addEntity(created));
+          }
+          if (onSuccess) onSuccess();
+        },
+        error: (err) => {
+          if (onError) onError(err);
+        }
+      });
+    },
+
+    selectCourse(id: number | null) {
+      patchState(store, { selectedCourseId: id });
+    },
+
+    deleteCourse(id: number) {
+      const previousSnapshot = store.entities();
+      patchState(store, removeEntity(id));
+
+      api.delete(id).pipe(
+        catchError((err) => {
+          patchState(store, setAllEntities(previousSnapshot));
+          patchState(store, {
+            error: err.error?.detail || 'Cannot delete course: active student enrollments exist.',
+          });
+          return EMPTY;
+        })
+      ).subscribe();
+    },
+  }))
 );

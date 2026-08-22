@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+﻿import { computed, inject } from '@angular/core';
 import {
   signalStore,
   withComputed,
@@ -10,55 +10,24 @@ import {
   withEntities,
   setAllEntities,
   addEntity,
-  removeEntity,
+  updateEntity,
 } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, concatMap, tap, catchError, EMPTY, switchMap } from 'rxjs';
+import { pipe, concatMap, tap, catchError, switchMap, EMPTY, Observable } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment.service';
-import { LiveSyncService, EnrollmentStatusEvent } from '../services/live-sync.service';
+import { LiveSyncService } from '../services/live-sync.service';
 import { Enrollment } from '../models/enrollment.model';
-
-const STORAGE_KEY = 'tms_enrollments';
-
-function getStoredEnrollments(): Enrollment[] | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.error('Failed to read enrollments from localStorage:', e);
-  }
-  return null;
-}
-
-function saveStoredEnrollments(enrollments: Enrollment[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(enrollments));
-  } catch (e) {
-    console.error('Failed to save enrollments to localStorage:', e);
-  }
-}
-
-function calculateLetterGrade(score: number): string {
-  if (score >= 90) return 'A';
-  if (score >= 80) return 'B';
-  if (score >= 70) return 'C';
-  if (score >= 60) return 'D';
-  return 'F';
-}
 
 export const EnrollmentStore = signalStore(
   { providedIn: 'root' },
-
   withState({
     isLoading: false,
     error: null as string | null,
+    filterTerm: '',
   }),
-
   withEntities<Enrollment>(),
-
   withComputed((store) => ({
+    totalCount: computed(() => store.entities().length),
     pendingCount: computed(
       () => store.entities().filter((e) => e.status === 'Pending').length
     ),
@@ -68,140 +37,131 @@ export const EnrollmentStore = signalStore(
     rejectedCount: computed(
       () => store.entities().filter((e) => e.status === 'Rejected').length
     ),
-  })),
-
-  withMethods((store) => {
-    const enrollmentService = inject(EnrollmentService);
-    const liveSync = inject(LiveSyncService);
-
-    // Auto-connect and subscribe to SignalR live updates for immediate multi-device reactive updates
-    liveSync.connect();
-    liveSync.events$.subscribe((event: EnrollmentStatusEvent) => {
-      console.log('[EnrollmentStore] SignalR live update received in store:', event);
-      const current = store.entities();
-      const updated = current.map((e) =>
-        e.id === event.id ? { ...e, status: event.status } : e
-      );
-      patchState(store, setAllEntities(updated));
-      saveStoredEnrollments(updated);
-    });
-
-    return {
-      // Load directly from PostgreSQL database API with fallback
-      loadEnrollments: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { isLoading: true })),
-          switchMap(() =>
-            enrollmentService.getAll().pipe(
-              tap((serverData) => {
-                if (serverData && serverData.length > 0) {
-                  patchState(store, setAllEntities(serverData), { isLoading: false, error: null });
-                  saveStoredEnrollments(serverData);
-                } else {
-                  // If database has 0 records yet, fallback to cache
-                  const saved = getStoredEnrollments();
-                  if (saved && saved.length > 0) {
-                    patchState(store, setAllEntities(saved), { isLoading: false });
-                  } else {
-                    const defaultEnrollments: Enrollment[] = [
-                      { id: 'ENR-1001', studentId: 1, studentName: 'Liya Kebede', courseId: 1, courseName: 'CSE-101 - Web Development Fundamentals', status: 'Approved', enrolledAt: '2026-08-13T08:00:00Z', grade: 92, letterGrade: 'A' },
-                      { id: 'ENR-1002', studentId: 2, studentName: 'Dawit Tadesse', courseId: 2, courseName: 'CSE-102 - TypeScript Essentials', status: 'Approved', enrolledAt: '2026-08-12T10:30:00Z', grade: 85, letterGrade: 'B' },
-                      { id: 'ENR-1003', studentId: 3, studentName: 'Sara Bekele', courseId: 3, courseName: 'CSE-103 - Git and Collaborative Workflows', status: 'Pending', enrolledAt: '2026-08-11T14:15:00Z' },
-                    ];
-                    patchState(store, setAllEntities(defaultEnrollments), { isLoading: false });
-                  }
-                }
-              }),
-              catchError((err) => {
-                console.warn('[EnrollmentStore] Backend API offline/syncing fallback:', err);
-                const saved = getStoredEnrollments() || [];
-                patchState(store, setAllEntities(saved), { isLoading: false });
-                return EMPTY;
-              })
-            )
-          )
-        )
-      ),
-
-      // Persist new enrollment directly into PostgreSQL database and update store
-      addEnrollmentAsync: (dto: { studentId: string; studentName?: string; courseId: number; term?: string; notes?: string; backupCourses?: string[] }) => {
-        return enrollmentService.create(dto).pipe(
-          tap((created) => {
-            patchState(store, addEntity(created));
-            saveStoredEnrollments(store.entities());
-          })
+    filteredEnrollments: computed(() => {
+      const term = store.filterTerm().toLowerCase();
+      if (!term) return store.entities();
+      return store
+        .entities()
+        .filter(
+          (e) =>
+            e.studentName.toLowerCase().includes(term) ||
+            e.courseName.toLowerCase().includes(term) ||
+            e.status.toLowerCase().includes(term)
         );
-      },
-
-      approveEnrollment: rxMethod<string>(
-        pipe(
-          tap((id: string) => {
-            const updated = store.entities().map((e) =>
-              e.id === id ? { ...e, status: 'Approved' as const } : e
-            );
-            patchState(store, setAllEntities(updated));
-            saveStoredEnrollments(updated);
-          }),
-          concatMap((id: string) =>
-            enrollmentService.approve(id).pipe(
-              catchError((err) => {
-                console.error('Approve enrollment server sync note:', err);
-                return EMPTY;
-              })
-            )
+    }),
+  })),
+  withMethods((
+    store,
+    api = inject(EnrollmentService),
+    sync = inject(LiveSyncService)
+  ) => ({
+    loadEnrollments: rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { isLoading: true, error: null })),
+        concatMap(() =>
+          api.getAll().pipe(
+            tap((rows) =>
+              patchState(store, setAllEntities(rows), { isLoading: false })
+            ),
+            catchError((err) => {
+              patchState(store, {
+                isLoading: false,
+                error: err.error?.detail || err.message || 'Failed to load enrollments',
+              });
+              return EMPTY;
+            })
           )
         )
-      ),
+      )
+    ),
 
-      rejectEnrollment: rxMethod<string>(
-        pipe(
-          tap((id: string) => {
-            const updated = store.entities().map((e) =>
-              e.id === id ? { ...e, status: 'Rejected' as const } : e
-            );
-            patchState(store, setAllEntities(updated));
-            saveStoredEnrollments(updated);
-          }),
-          concatMap((id: string) =>
-            enrollmentService.reject(id).pipe(
-              catchError((err) => {
-                console.error('Reject enrollment server sync note:', err);
-                return EMPTY;
-              })
-            )
-          )
-        )
-      ),
+    setFilter(filterTerm: string) {
+      patchState(store, { filterTerm });
+    },
 
-      updateGrade: (studentId: number, courseId: number, score: number) => {
-        const letter = calculateLetterGrade(score);
-        const updated = store.entities().map((e) => {
-          if (e.studentId === studentId && e.courseId === courseId) {
-            return { ...e, grade: score, letterGrade: letter };
+    addEnrollment(enrollment: Enrollment) {
+      patchState(store, addEntity(enrollment));
+    },
+
+    addEnrollmentAsync(dto: {
+      studentId: string;
+      studentName?: string;
+      courseId: number;
+      term?: string;
+      notes?: string;
+      backupCourses?: string[];
+    }): Observable<Enrollment> {
+      return api.create(dto).pipe(
+        tap((created) => {
+          if (created) {
+            patchState(store, addEntity(created));
           }
-          return e;
-        });
-        patchState(store, setAllEntities(updated));
-        saveStoredEnrollments(updated);
-      },
+        })
+      );
+    },
 
-      addEnrollment: (enrollment: Enrollment) => {
-        patchState(store, addEntity(enrollment));
-        saveStoredEnrollments(store.entities());
-      },
+    updateGrade(studentId: number, courseId: number, grade: number) {
+      const found = store
+        .entities()
+        .find((e) => e.studentId === studentId && e.courseId === courseId);
+      if (found) {
+        const letter = grade >= 90 ? 'A' : grade >= 80 ? 'B' : grade >= 70 ? 'C' : 'D';
+        patchState(
+          store,
+          updateEntity({ id: found.id, changes: { status: 'Approved', grade, letterGrade: letter } })
+        );
+      }
+    },
 
-      removeEnrollment: rxMethod<string>(
-        pipe(
-          tap((id: string) => {
-            patchState(store, removeEntity(id));
-            saveStoredEnrollments(store.entities());
-          })
+    approveEnrollment: rxMethod<string>(
+      pipe(
+        tap((id) => {
+          patchState(store, updateEntity({ id, changes: { status: 'Approved' } }));
+        }),
+        concatMap((id) =>
+          api.approve(id).pipe(
+            catchError((err) => {
+              patchState(store, updateEntity({ id, changes: { status: 'Pending' } }));
+              patchState(store, {
+                error: err.error?.detail || 'Server rejected the approval. Check enrollment constraints.',
+              });
+              return EMPTY;
+            })
+          )
         )
-      ),
+      )
+    ),
 
-      listenForLiveUpdates: () => {
-        liveSync.connect();
-      },
-    };
-  })
+    rejectEnrollment: rxMethod<string>(
+      pipe(
+        tap((id) => {
+          patchState(store, updateEntity({ id, changes: { status: 'Rejected' } }));
+        }),
+        concatMap((id) =>
+          api.reject(id).pipe(
+            catchError((err) => {
+              patchState(store, updateEntity({ id, changes: { status: 'Pending' } }));
+              patchState(store, {
+                error: err.error?.detail || 'Server rejected rejection.',
+              });
+              return EMPTY;
+            })
+          )
+        )
+      )
+    ),
+
+    listenForLiveUpdates: rxMethod<void>(
+      pipe(
+        tap(() => sync.connect()),
+        switchMap(() => sync.events$),
+        tap((event) => {
+          patchState(
+            store,
+            updateEntity({ id: event.id, changes: { status: event.status } })
+          );
+        })
+      )
+    ),
+  }))
 );
