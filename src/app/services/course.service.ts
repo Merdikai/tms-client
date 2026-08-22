@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+﻿import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -26,7 +26,7 @@ export class CourseService {
       .pipe(map((response) => response.items ?? (response as any).data ?? []));
   }
 
-  getById(id: string) {
+  getById(id: string | number) {
     return this.http.get<CourseDetail>(`${this.base}/${id}`);
   }
 
@@ -34,7 +34,15 @@ export class CourseService {
     return this.http.post<Course>(this.base, payload);
   }
 
+  createCourse(payload: CreateCoursePayload) {
+    return this.create(payload);
+  }
+
   delete(id: number | string) {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  deleteCourse(id: number | string) {
+    return this.delete(id);
   }
 }

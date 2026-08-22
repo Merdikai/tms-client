@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+﻿import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -7,8 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { firstValueFrom } from 'rxjs';
-import { GradeService } from '../../services/grade.service';
+import { Subject } from 'rxjs';
+import { exhaustMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { GradeService, GradePayload } from '../../services/grade.service';
 import { EnrollmentStore } from '../../store/enrollment.store';
 
 @Component({
@@ -42,12 +44,54 @@ export class GradeSubmissionComponent implements OnInit {
   submissionStatus = signal('');
   isSuccess = signal(false);
 
+  // Subject is an event stream protected against duplicate rage-clicks by exhaustMap
+  private submitClick$ = new Subject<GradePayload>();
+
+  constructor() {
+    this.submitClick$
+      .pipe(
+        // exhaustMap: while the inner HTTP observable is active, all subsequent clicks are silently dropped
+        exhaustMap((payload) => {
+          this.isSubmitting.set(true);
+          this.submissionStatus.set('Submitting grade to server...');
+          this.isSuccess.set(false);
+          return this.api.postGrade(payload);
+        }),
+        // takeUntilDestroyed: automatically unsubscribes on component destruction to prevent leaks
+        takeUntilDestroyed()
+      )
+      .subscribe({
+        next: (result) => {
+          this.isSubmitting.set(false);
+          this.isSuccess.set(true);
+          this.submissionStatus.set(
+            `Grade saved successfully! Record ID: ${result.id}`
+          );
+          const raw = this.gradeForm.getRawValue();
+          this.enrollmentStore.updateGrade(
+            Number(raw.studentId),
+            Number(raw.courseId),
+            Number(raw.score)
+          );
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.isSuccess.set(false);
+          this.submissionStatus.set(
+            `Submission failed: ${err?.error?.detail || err?.message || 'Server error'}`
+          );
+        },
+      });
+  }
+
   ngOnInit() {
     this.enrollmentStore.loadEnrollments();
   }
 
   onSelectEnrollment(enrollmentId: string) {
-    const enrollment = this.enrollmentStore.entities().find((e) => e.id === enrollmentId);
+    const enrollment = this.enrollmentStore
+      .entities()
+      .find((e) => e.id === enrollmentId);
     if (enrollment) {
       this.gradeForm.patchValue({
         studentId: enrollment.studentId,
@@ -56,39 +100,16 @@ export class GradeSubmissionComponent implements OnInit {
     }
   }
 
-  async onSubmit() {
-    if (this.gradeForm.invalid || this.isSubmitting()) {
+  onSubmit() {
+    if (this.gradeForm.valid) {
+      const rawValue = this.gradeForm.getRawValue();
+      this.submitClick$.next({
+        studentId: Number(rawValue.studentId),
+        courseId: Number(rawValue.courseId),
+        score: Number(rawValue.score),
+      });
+    } else {
       this.gradeForm.markAllAsTouched();
-      return;
-    }
-
-    const rawValue = this.gradeForm.getRawValue();
-    const studentIdNum = Number(rawValue.studentId);
-    const courseIdNum = Number(rawValue.courseId);
-    const scoreNum = Number(rawValue.score);
-
-    this.isSubmitting.set(true);
-    this.submissionStatus.set('Submitting grade to server...');
-    this.isSuccess.set(false);
-
-    try {
-      const result = await firstValueFrom(
-        this.api.postGrade({
-          studentId: studentIdNum,
-          courseId: courseIdNum,
-          score: scoreNum,
-        })
-      );
-      this.isSuccess.set(true);
-      this.submissionStatus.set(`Grade saved successfully to database! Record ID: ${result.id}`);
-
-      // Update store so student dashboard and enrollment list reflect the grade immediately
-      this.enrollmentStore.updateGrade(studentIdNum, courseIdNum, scoreNum);
-    } catch (err: any) {
-      this.isSuccess.set(false);
-      this.submissionStatus.set(`Submission failed: ${err?.error?.detail || err?.message || 'Server error'}`);
-    } finally {
-      this.isSubmitting.set(false);
     }
   }
 }
