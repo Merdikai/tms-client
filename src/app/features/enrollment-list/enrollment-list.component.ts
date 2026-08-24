@@ -3,18 +3,21 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 import { EnrollmentStore } from '../../store/enrollment.store';
+import { AuthService } from '../../services/auth.service';
 import { Enrollment } from '../../models/enrollment.model';
 
 @Component({
   selector: 'tms-enrollment-list',
   standalone: true,
-  imports: [MatTableModule, MatPaginatorModule, MatSortModule, MatButtonModule],
+  imports: [CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatButtonModule],
   templateUrl: './enrollment-list.component.html',
   styleUrl: './enrollment-list.component.scss',
 })
 export class EnrollmentListComponent {
   store = inject(EnrollmentStore);
+  auth = inject(AuthService);
   displayedColumns = ['studentName', 'courseName', 'status', 'grade', 'actions'];
 
   // MatTableDataSource bridges store data into Material's rendering pipeline
@@ -25,9 +28,9 @@ export class EnrollmentListComponent {
   readonly sort = viewChild(MatSort);
 
   constructor() {
-    // Effect 1: Push store entities into the Material data source whenever they change
+    // Effect 1: Push store scoped enrollments into the Material data source whenever they change
     effect(() => {
-      this.dataSource.data = this.store.entities();
+      this.dataSource.data = this.store.scopedEnrollments();
     });
 
     // Effect 2: Wire paginator and sort controls once Angular resolves the view queries
@@ -41,5 +44,13 @@ export class EnrollmentListComponent {
     // Load enrollments on component creation and listen to live SignalR stream
     this.store.loadEnrollments();
     this.store.listenForLiveUpdates();
+  }
+
+  isOwner(row: Enrollment): boolean {
+    return this.auth.isCourseOwner(row.courseInstructorId);
+  }
+
+  setScope(scope: 'all' | 'my') {
+    this.store.setScope(scope);
   }
 }

@@ -3,19 +3,44 @@
   <div class="page-heading">
     <div>
       <h1 class="page-title">Institutional Course Catalog</h1>
-      <p class="page-subtitle">Explore accredited courses, term schedules, and seat capacity status.</p>
+      <p class="page-subtitle">Explore accredited courses, instructor assignments, and live seat capacities.</p>
     </div>
-    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+    <div class="header-actions">
+      <!-- Scope Filter Tabs for Instructors/Admins -->
+      @if (isPrivileged()) {
+        <div class="scope-switch">
+          <button
+            type="button"
+            class="scope-tab"
+            [class.active]="store.scope() === 'all'"
+            (click)="setScope('all')"
+          >
+            <span>All Courses ({{ store.entities().length }})</span>
+          </button>
+          <button
+            type="button"
+            class="scope-tab"
+            [class.active]="store.scope() === 'my'"
+            (click)="setScope('my')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>My Courses ({{ store.myCourses().length }})</span>
+          </button>
+        </div>
+      }
+
       <div class="header-badge">
         <span class="total-courses-pill">
-          <strong>{{ store.courseCount() }}</strong> Modules Offered
+          <strong>{{ store.courseCount() }}</strong> Modules Active
         </span>
       </div>
 
       <!-- Instructor / Admin Create Course Button -->
       @if (isPrivileged()) {
         <button (click)="openCreateModal()" class="btn-create-course">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
@@ -29,28 +54,65 @@
   @if (store.isLoading()) {
     <div class="loading-box">
       <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading course modules...</p>
+      <p>Loading course catalog...</p>
     </div>
   }
 
   <!-- Error State -->
   @if (store.error()) {
     <div class="error-banner">
-      <span class="error-text">⚠️ {{ store.error() }}</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span class="error-text">{{ store.error() }}</span>
       <button mat-button color="warn" (click)="store.loadCourses()">Retry Connection</button>
     </div>
   }
 
   <!-- Course Grid -->
   <div class="courses-grid">
-    @for (course of store.entities(); track course.id) {
-      <mat-card class="course-module-card">
+    @for (course of store.scopedCourses(); track course.id) {
+      <mat-card class="course-module-card" [class.owned-card]="isOwner(course)">
         <mat-card-header class="card-header">
-          <div class="code-pill">{{ course.code }}</div>
+          <div class="header-top-row">
+            <div class="code-pill">{{ course.code }}</div>
+            
+            <!-- Ownership Badge -->
+            @if (isPrivileged()) {
+              @if (isOwner(course)) {
+                <span class="badge-ownership badge-owner" title="You own and manage this course resource">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span>Owned by You</span>
+                </span>
+              } @else {
+                <span class="badge-ownership badge-other" [title]="'Instructor: ' + (course.instructorName || 'Other')">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span>Faculty Owned</span>
+                </span>
+              }
+            }
+          </div>
           <mat-card-title class="course-title">{{ course.title }}</mat-card-title>
         </mat-card-header>
 
         <mat-card-content class="card-body">
+          <!-- Instructor Info Row -->
+          <div class="instructor-row">
+            <svg class="instructor-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="instructor-label">Instructor:</span>
+            <strong class="instructor-name">{{ course.instructorName || 'Dr. Alex Taylor' }}</strong>
+          </div>
+
           <div class="capacity-row">
             <span class="capacity-label">Seat Availability</span>
             <span class="capacity-val"><strong>{{ course.enrollmentCount }}</strong> / {{ course.maxCapacity }} Seats</span>
@@ -76,16 +138,45 @@
         </mat-card-content>
 
         <mat-card-actions class="card-actions">
-          <!-- Instructor / Admin only: Delete button -->
-          @if (auth.hasRole('Instructor') || auth.hasRole('Admin')) {
-            <button
-              mat-stroked-button
-              color="warn"
-              (click)="onDelete(course.id, course.title)"
-              class="btn-delete"
-            >
-              Delete Course
-            </button>
+          <!-- Instructor / Admin Action Buttons -->
+          @if (isPrivileged()) {
+            <div class="privileged-actions">
+              <!-- Edit Course: Enabled for Owner or Admin, disabled for others -->
+              @if (isOwner(course)) {
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  (click)="openEditModal(course)"
+                  class="btn-edit-course"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                  <span>Edit Course</span>
+                </button>
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  (click)="onDelete(course.id, course.title, course.instructorId)"
+                  class="btn-delete"
+                >
+                  <span>Delete</span>
+                </button>
+              } @else {
+                <button
+                  mat-stroked-button
+                  disabled
+                  class="btn-disabled-action"
+                  [title]="'Restricted: Course owned by ' + (course.instructorName || 'another instructor')"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span>Read-Only</span>
+                </button>
+              }
+            </div>
           }
 
           <!-- Student: Enroll button -->
@@ -105,7 +196,12 @@
     } @empty {
       @if (!store.isLoading()) {
         <div class="empty-state-box">
-          <p>No active courses found in the catalog.</p>
+          <p>No courses found for the current filter.</p>
+          @if (store.scope() === 'my') {
+            <button (click)="openCreateModal()" class="btn-create-course" style="margin-top: 1rem;">
+              + Create Your First Course
+            </button>
+          }
         </div>
       }
     }
@@ -157,6 +253,15 @@
               class="input-control"
             />
           </div>
+
+          <div class="instructor-assigned-notice">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Assigned Instructor:</span>
+            <strong>{{ auth.currentUser()?.displayName || 'Current User' }}</strong>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -166,7 +271,76 @@
             [disabled]="isSubmitting()"
             class="btn-submit-course"
           >
-            {{ isSubmitting() ? 'Saving to Database...' : 'Create Course' }}
+            {{ isSubmitting() ? 'Saving to Database...' : 'Create & Assign Course' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Course Modal (Enforces Resource-Based Authorization) -->
+  @if (showEditModal()) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Edit Course: {{ editCourseData.code }}</h2>
+          <button (click)="closeEditModal()" class="btn-close-modal">✕</button>
+        </div>
+
+        @if (modalError()) {
+          <div class="modal-error-alert">
+            {{ modalError() }}
+          </div>
+        }
+
+        <div class="modal-form-body">
+          <div class="form-group">
+            <label>Course Code</label>
+            <input
+              type="text"
+              [(ngModel)]="editCourseData.code"
+              class="input-control"
+              disabled
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Course Title</label>
+            <input
+              type="text"
+              [(ngModel)]="editCourseData.title"
+              placeholder="Course title"
+              class="input-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Max Seat Capacity</label>
+            <input
+              type="number"
+              [(ngModel)]="editCourseData.maxCapacity"
+              min="5"
+              max="200"
+              class="input-control"
+            />
+          </div>
+
+          <div class="security-policy-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Authorized under <strong>CanEditCourse</strong> Policy</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button (click)="closeEditModal()" class="btn-cancel">Cancel</button>
+          <button
+            (click)="submitUpdateCourse()"
+            [disabled]="isSubmitting()"
+            class="btn-submit-course"
+          >
+            {{ isSubmitting() ? 'Updating Course...' : 'Save Changes' }}
           </button>
         </div>
       </div>

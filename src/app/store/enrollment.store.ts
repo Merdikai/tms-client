@@ -1,4 +1,4 @@
-﻿import { computed, inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import {
   signalStore,
   withComputed,
@@ -16,6 +16,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, concatMap, tap, catchError, switchMap, EMPTY, Observable } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment.service';
 import { LiveSyncService } from '../services/live-sync.service';
+import { AuthService } from '../services/auth.service';
 import { Enrollment } from '../models/enrollment.model';
 
 export const EnrollmentStore = signalStore(
@@ -24,32 +25,48 @@ export const EnrollmentStore = signalStore(
     isLoading: false,
     error: null as string | null,
     filterTerm: '',
+    scope: 'my' as 'all' | 'my',
   }),
   withEntities<Enrollment>(),
-  withComputed((store) => ({
-    totalCount: computed(() => store.entities().length),
-    pendingCount: computed(
-      () => store.entities().filter((e) => e.status === 'Pending').length
-    ),
-    approvedCount: computed(
-      () => store.entities().filter((e) => e.status === 'Approved').length
-    ),
-    rejectedCount: computed(
-      () => store.entities().filter((e) => e.status === 'Rejected').length
-    ),
-    filteredEnrollments: computed(() => {
-      const term = store.filterTerm().toLowerCase();
-      if (!term) return store.entities();
-      return store
-        .entities()
-        .filter(
+  withComputed((store, auth = inject(AuthService)) => {
+    const scopedEnrollments = computed(() => {
+      const all = store.entities();
+      const scope = store.scope();
+
+      // If 'all' scope selected, show all records (or if admin)
+      if (scope === 'all') {
+        return all;
+      }
+
+      // If 'my' scope selected: strictly filter to courses assigned to this instructor
+      return all.filter((e) => auth.isCourseOwner(e.courseInstructorId));
+    });
+
+    return {
+      scopedEnrollments,
+      totalCount: computed(() => scopedEnrollments().length),
+      pendingCount: computed(
+        () => scopedEnrollments().filter((e) => e.status === 'Pending').length
+      ),
+      approvedCount: computed(
+        () => scopedEnrollments().filter((e) => e.status === 'Approved').length
+      ),
+      rejectedCount: computed(
+        () => scopedEnrollments().filter((e) => e.status === 'Rejected').length
+      ),
+      filteredEnrollments: computed(() => {
+        const term = store.filterTerm().toLowerCase();
+        const list = scopedEnrollments();
+        if (!term) return list;
+        return list.filter(
           (e) =>
             e.studentName.toLowerCase().includes(term) ||
             e.courseName.toLowerCase().includes(term) ||
             e.status.toLowerCase().includes(term)
         );
-    }),
-  })),
+      }),
+    };
+  }),
   withMethods((
     store,
     api = inject(EnrollmentService),
@@ -77,6 +94,10 @@ export const EnrollmentStore = signalStore(
 
     setFilter(filterTerm: string) {
       patchState(store, { filterTerm });
+    },
+
+    setScope(scope: 'all' | 'my') {
+      patchState(store, { scope });
     },
 
     addEnrollment(enrollment: Enrollment) {
