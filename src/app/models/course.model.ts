@@ -1,4 +1,4 @@
-﻿import { Temporal } from "@js-temporal/polyfill";
+import { Temporal } from "@js-temporal/polyfill";
 
 export interface Course {
   id: number;
@@ -8,6 +8,8 @@ export interface Course {
   enrollmentCount: number;
   status?: string;
   category?: string;
+  instructorId?: string | null;
+  instructorName?: string | null;
 }
 
 export type CourseStatus =

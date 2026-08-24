@@ -70,10 +70,17 @@ export class LoginComponent {
       if (user?.role === 'Student') {
         this.router.navigate(['/student']);
       } else {
+        // Admin and Instructor both land on Dashboard directly
         this.router.navigate(['/dashboard']);
       }
     } catch (err: any) {
-      this.error.set(err.error?.detail || err.error?.message || 'Login failed. Please check your credentials.');
+      if (err.status === 403 || (err.error?.detail && err.error.detail.includes('pending Administrator'))) {
+        this.error.set('Registration Pending Approval: Your account application was received and is awaiting Administrator review. Access will be activated upon approval.');
+      } else if (err.status === 403 && err.error?.detail && err.error.detail.includes('declined')) {
+        this.error.set('Registration Declined: This account application was declined by the administrator.');
+      } else {
+        this.error.set(err.error?.detail || err.error?.message || 'Login failed. Please verify your credentials or ensure your account is approved.');
+      }
     } finally {
       this.isLoading.set(false);
     }
@@ -96,17 +103,16 @@ export class LoginComponent {
         role: formVal.role!,
       });
 
-      this.successMessage.set('Account registered successfully! Logging you in...');
-      
-      // Auto login after registration
-      await this.auth.login({ username: formVal.email!, password: formVal.password! });
-      
-      const user = this.auth.currentUser();
-      if (user?.role === 'Student') {
-        this.router.navigate(['/student']);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
+      // Switch to sign in tab and display the pending approval notice
+      this.isRegisterMode.set(false);
+      this.loginForm.patchValue({
+        username: formVal.email,
+        password: '',
+      });
+      this.successMessage.set(
+        'Registration submitted successfully! Your account is currently Pending Administrator Approval. An administrator will review and activate your account.'
+      );
+      this.registerForm.reset({ role: 'Student' });
     } catch (err: any) {
       if (err.error?.errors && Array.isArray(err.error.errors)) {
         this.error.set(err.error.errors.join(' '));

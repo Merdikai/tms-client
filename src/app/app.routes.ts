@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
-import { roleGuard } from './guards/role.guard';
+import { roleGuard, anyRoleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -11,12 +11,43 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'unauthorized',
+    loadComponent: () =>
+      import('./features/unauthorized/unauthorized.component').then(
+        (m) => m.UnauthorizedComponent
+      ),
+  },
+  {
+    path: 'admin/users',
+    loadComponent: () =>
+      import('./features/admin-users/admin-users.component').then(
+        (m) => m.AdminUsersComponent
+      ),
+    canActivate: [roleGuard('Admin')],
+  },
+  {
     path: 'dashboard',
     loadComponent: () =>
       import('./features/instructor-dashboard/instructor-dashboard.component').then(
         (m) => m.InstructorDashboardComponent
       ),
-    canActivate: [roleGuard('Instructor')],
+    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
+  },
+  {
+    path: 'admin/courses',
+    loadComponent: () =>
+      import('./features/course-list/course-list.component').then(
+        (m) => m.CourseListComponent
+      ),
+    canActivate: [roleGuard('Admin')],
+  },
+  {
+    path: 'instructor/courses',
+    loadComponent: () =>
+      import('./features/course-list/course-list.component').then(
+        (m) => m.CourseListComponent
+      ),
+    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
   },
   {
     path: 'student',
@@ -24,7 +55,7 @@ export const routes: Routes = [
       import('./features/student-dashboard/student-dashboard.component').then(
         (m) => m.StudentDashboardComponent
       ),
-    canActivate: [roleGuard('Student')],
+    canActivate: [anyRoleGuard(['Admin', 'Student'])],
   },
   {
     path: 'enrollments',
@@ -32,7 +63,7 @@ export const routes: Routes = [
       import('./features/enrollment-list/enrollment-list.component').then(
         (m) => m.EnrollmentListComponent
       ),
-    canActivate: [roleGuard('Instructor')],
+    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
   },
   {
     path: 'courses',
@@ -56,7 +87,7 @@ export const routes: Routes = [
       import('./features/enrollment-form/enrollment-form.component').then(
         (m) => m.EnrollmentFormComponent
       ),
-    canActivate: [roleGuard('Student')],
+    canActivate: [anyRoleGuard(['Admin', 'Student'])],
   },
   {
     path: 'grade-submission',
@@ -64,11 +95,15 @@ export const routes: Routes = [
       import('./features/grade-submission/grade-submission.component').then(
         (m) => m.GradeSubmissionComponent
       ),
-    canActivate: [roleGuard('Instructor')],
+    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
   },
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
+  },
+  {
+    path: '**',
+    redirectTo: 'login',
   },
 ];

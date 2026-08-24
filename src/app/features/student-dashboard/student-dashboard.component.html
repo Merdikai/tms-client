@@ -2,7 +2,7 @@
   <!-- Top Banner & Welcome -->
   <div class="hub-header">
     <div>
-      <h1 class="welcome-heading">Welcome back, <span class="highlight">{{ studentName() }}</span> 👋</h1>
+      <h1 class="welcome-heading">Welcome back, <span class="highlight">{{ studentName() }}</span></h1>
       <p class="welcome-sub">Track your active enrollments, course grades, official transcripts, and degree progress.</p>
     </div>
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -149,7 +149,11 @@
 
               <!-- Certificate Button -->
               <button (click)="viewCertificate(enrollment.courseName)" class="btn-cert">
-                🎓 Certificate
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px;">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+                <span>Certificate</span>
               </button>
             } @else {
               <span class="grade-pending-pill">
@@ -160,7 +164,12 @@
         </div>
       } @empty {
         <div class="empty-state-box">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
           <h3>No Active Enrollments Found</h3>
           <p>You haven't enrolled in any courses for this term yet. Select a course from the catalog below.</p>
         </div>
@@ -173,7 +182,12 @@
     <div class="modal-backdrop" (click)="closeCertificate()">
       <div class="cert-modal-card" (click)="$event.stopPropagation()">
         <div class="cert-frame">
-          <div class="cert-seal">🏅</div>
+          <div class="cert-seal">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="7"></circle>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+            </svg>
+          </div>
           <h2 class="cert-title">Certificate of Completion</h2>
           <p class="cert-body-text">This is to officially certify that</p>
           <h3 class="cert-recipient">{{ studentName() }}</h3>

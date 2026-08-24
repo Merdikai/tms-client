@@ -2,16 +2,52 @@
   <!-- Header & KPI Section -->
   <div class="hub-header">
     <div>
+      <div class="instructor-welcome">
+        <span class="badge-role">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Instructor Portal</span>
+        </span>
+        @if (auth.currentUser(); as user) {
+          <span class="instructor-id-pill">Logged in as: <strong>{{ user.displayName }}</strong></span>
+        }
+      </div>
       <h1 class="hub-title">Instructor Command Center</h1>
-      <p class="hub-subtitle">Real-time enrollment diagnostics, status breakdowns, and cohort metrics.</p>
+      <p class="hub-subtitle">Real-time enrollment diagnostics, status breakdowns, and cohort metrics for your courses.</p>
     </div>
+    
     <div class="header-actions">
+      <!-- Scope Filter for Instructors/Admins -->
+      <div class="scope-switch">
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="store.scope() === 'my'"
+          (click)="setScope('my')"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>My Students & Courses</span>
+        </button>
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="store.scope() === 'all'"
+          (click)="setScope('all')"
+        >
+          <span>All Academy Data</span>
+        </button>
+      </div>
+
       <a routerLink="/enrollments" class="btn-action-primary">View Enrollments Grid</a>
       <a routerLink="/grade-submission" class="btn-action-secondary">Grade Submission</a>
     </div>
   </div>
 
-  <!-- KPI Stat Cards -->
+  <!-- KPI Stat Cards (Scored to current instructor) -->
   <div class="kpi-grid">
     <div class="kpi-card total-card">
       <div class="kpi-icon-box">
@@ -23,9 +59,9 @@
         </svg>
       </div>
       <div class="kpi-data">
-        <span class="kpi-label">Total Student Enrollments</span>
-        <span class="kpi-value">{{ store.entities().length }}</span>
-        <span class="kpi-trend">Across All Course Sections</span>
+        <span class="kpi-label">Active Student Enrollments</span>
+        <span class="kpi-value">{{ store.totalCount() }}</span>
+        <span class="kpi-trend">{{ store.scope() === 'my' ? 'Enrolled in Your Courses' : 'Across All Academy Courses' }}</span>
       </div>
     </div>
 
@@ -39,7 +75,7 @@
       <div class="kpi-data">
         <span class="kpi-label">Pending Approval Requests</span>
         <span class="kpi-value pending-val">{{ store.pendingCount() }}</span>
-        <span class="kpi-trend pending-trend">Requires Instructor Attention</span>
+        <span class="kpi-trend pending-trend">Requires Your Attention</span>
       </div>
     </div>
 
@@ -63,14 +99,14 @@
     <div class="chart-header">
       <div>
         <h2 class="chart-title">Enrollment Distribution & Capacity Status</h2>
-        <p class="chart-subtitle">Real-time enrollment status breakdown across current academic term.</p>
+        <p class="chart-subtitle">Real-time status breakdown for {{ store.scope() === 'my' ? 'your assigned courses' : 'all institution courses' }}.</p>
       </div>
     </div>
 
-    <!-- DEFERRED UI: The chart code lives in a separate .js chunk file -->
+    <!-- DEFERRED UI: The chart receives the instructor-filtered enrollments -->
     <div class="chart-container">
       @defer (on viewport; prefetch on idle(500)) {
-        <tms-analytics-chart [data]="store.entities()" />
+        <tms-analytics-chart [data]="store.scopedEnrollments()" />
       } @placeholder {
         <div class="skeleton-chart">
           <div class="skeleton-shimmer"></div>

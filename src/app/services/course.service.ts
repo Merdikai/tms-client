@@ -1,4 +1,4 @@
-﻿import { Injectable, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -8,7 +8,7 @@ export interface CreateCoursePayload {
   code: string;
   title: string;
   maxCapacity: number;
-  instructorId?: number;
+  instructorId?: string | number;
 }
 
 @Injectable({
@@ -36,6 +36,10 @@ export class CourseService {
 
   createCourse(payload: CreateCoursePayload) {
     return this.create(payload);
+  }
+
+  update(id: number | string, payload: Partial<CreateCoursePayload>) {
+    return this.http.put<Course>(`${this.base}/${id}`, payload);
   }
 
   delete(id: number | string) {

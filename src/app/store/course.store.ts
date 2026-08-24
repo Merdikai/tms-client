@@ -1,4 +1,4 @@
-﻿import { computed, inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import {
   signalStore,
   withComputed,
@@ -15,6 +15,7 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, concatMap, tap, catchError, EMPTY } from 'rxjs';
 import { CourseService, CreateCoursePayload } from '../services/course.service';
+import { AuthService } from '../services/auth.service';
 import { Course } from '../models/course.model';
 
 export const CourseStore = signalStore(
@@ -23,22 +24,39 @@ export const CourseStore = signalStore(
     isLoading: false,
     error: null as string | null,
     selectedCourseId: null as number | null,
+    scope: 'all' as 'all' | 'my',
   }),
   withEntities<Course>(),
-  withComputed((store) => ({
-    totalCourses: computed(() => store.entities().length),
-    courseCount: computed(() => store.entities().length),
-    availableCourses: computed(() =>
-      store.entities().filter((c) => c.enrollmentCount < c.maxCapacity)
-    ),
-    fullCourses: computed(() =>
-      store.entities().filter((c) => c.enrollmentCount >= c.maxCapacity)
-    ),
-    selectedCourse: computed(() => {
-      const id = store.selectedCourseId();
-      return id ? store.entityMap()[id] ?? null : null;
-    }),
-  })),
+  withComputed((store, auth = inject(AuthService)) => {
+    const myCourses = computed(() => {
+      return store.entities().filter((c) => auth.isCourseOwner(c.instructorId));
+    });
+
+    const scopedCourses = computed(() => {
+      const scope = store.scope();
+      if (scope === 'my') {
+        return myCourses();
+      }
+      return store.entities();
+    });
+
+    return {
+      myCourses,
+      scopedCourses,
+      totalCourses: computed(() => scopedCourses().length),
+      courseCount: computed(() => scopedCourses().length),
+      availableCourses: computed(() =>
+        scopedCourses().filter((c) => c.enrollmentCount < c.maxCapacity)
+      ),
+      fullCourses: computed(() =>
+        scopedCourses().filter((c) => c.enrollmentCount >= c.maxCapacity)
+      ),
+      selectedCourse: computed(() => {
+        const id = store.selectedCourseId();
+        return id ? store.entityMap()[id] ?? null : null;
+      }),
+    };
+  }),
   withMethods((store, api = inject(CourseService)) => ({
     loadCourses: rxMethod<void>(
       pipe(
@@ -59,6 +77,10 @@ export const CourseStore = signalStore(
         )
       )
     ),
+
+    setScope(scope: 'all' | 'my') {
+      patchState(store, { scope });
+    },
 
     createCourse(payload: CreateCoursePayload, onSuccess?: () => void, onError?: (err: any) => void) {
       api.create(payload).subscribe({

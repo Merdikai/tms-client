@@ -2,22 +2,48 @@
   <div class="page-heading">
     <div>
       <h1 class="page-title">Student Enrollment Records</h1>
-      <p class="page-subtitle">Manage admissions, course allocations, and finalized grades.</p>
+      <p class="page-subtitle">Manage admissions, course allocations, and finalized grades for your cohorts.</p>
     </div>
-    <div class="stats-pills">
-      <span class="count-pill pending-pill">
-        <strong>{{ store.pendingCount() }}</strong> Pending
-      </span>
-      <span class="count-pill approved-pill">
-        <strong>{{ store.approvedCount() }}</strong> Approved
-      </span>
+
+    <div class="header-right-tools">
+      <!-- Scope Filter Tabs -->
+      <div class="scope-switch">
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="store.scope() === 'my'"
+          (click)="setScope('my')"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>My Students</span>
+        </button>
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="store.scope() === 'all'"
+          (click)="setScope('all')"
+        >
+          <span>All Academy Records</span>
+        </button>
+      </div>
+
+      <div class="stats-pills">
+        <span class="count-pill pending-pill">
+          <strong>{{ store.pendingCount() }}</strong> Pending
+        </span>
+        <span class="count-pill approved-pill">
+          <strong>{{ store.approvedCount() }}</strong> Approved
+        </span>
+      </div>
     </div>
   </div>
 
   @if (store.isLoading()) {
     <div class="loading-box">
       <div class="loading-spinner"></div>
-      <span>Synchronizing enrollment data...</span>
+      <span>Synchronizing enrollment records...</span>
     </div>
   }
 
@@ -47,10 +73,20 @@
 
       <!-- Course & Details Column -->
       <ng-container matColumnDef="courseName">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Course & Details</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Course & Instructor</th>
         <td mat-cell *matCellDef="let row">
           <div class="course-cell">
             <strong class="cell-primary-text">{{ row.courseName }}</strong>
+            <div class="instructor-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px;">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>{{ row.courseInstructorName || 'Dr. Alex Taylor' }}</span>
+              @if (isOwner(row)) {
+                <span class="owner-pill">Your Course</span>
+              }
+            </div>
             @if (row.notes) {
               <div class="note-chip">
                 <span class="chip-label">Goal/Note:</span> "{{ row.notes }}"
@@ -94,14 +130,24 @@
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let row">
           @if (row.status === 'Pending') {
-            <div class="actions-group">
-              <button mat-flat-button color="primary" class="btn-table-approve" (click)="store.approveEnrollment(row.id)">
-                Approve
-              </button>
-              <button mat-stroked-button class="btn-table-reject" (click)="store.rejectEnrollment(row.id)">
-                Reject
-              </button>
-            </div>
+            @if (isOwner(row) || auth.hasRole('Admin')) {
+              <div class="actions-group">
+                <button mat-flat-button color="primary" class="btn-table-approve" (click)="store.approveEnrollment(row.id)">
+                  Approve
+                </button>
+                <button mat-stroked-button class="btn-table-reject" (click)="store.rejectEnrollment(row.id)">
+                  Reject
+                </button>
+              </div>
+            } @else {
+              <span class="restricted-badge" title="Only the assigned course instructor can approve this enrollment">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: -1px; margin-right: 2px;">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Instructor Only</span>
+              </span>
+            }
           } @else if (row.status === 'Approved') {
             <span class="confirmed-tag">Enrolled</span>
           } @else {
@@ -114,6 +160,6 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="custom-paginator"></mat-paginator>
+    <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons class="custom-paginator"></mat-paginator>
   </div>
 </div>
