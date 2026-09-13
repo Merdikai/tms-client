@@ -30,6 +30,12 @@
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+
+  &.badge-admin {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
 }
 
 .instructor-id-pill {
@@ -61,38 +67,10 @@
   flex-wrap: wrap;
 }
 
-.scope-switch {
-  display: flex;
-  background: var(--bg-surface-subtle);
-  border: 1px solid var(--border-color);
-  padding: 4px;
-  border-radius: 12px;
-  gap: 4px;
-}
-
-.scope-tab {
-  background: transparent;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &.active {
-    background: var(--primary);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-  }
-}
-
 .btn-action-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--primary-gradient);
   color: #ffffff;
   padding: 10px 20px;
@@ -110,6 +88,9 @@
 }
 
 .btn-action-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-color);

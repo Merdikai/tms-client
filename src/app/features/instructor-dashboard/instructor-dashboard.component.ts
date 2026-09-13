@@ -17,11 +17,14 @@ export class InstructorDashboardComponent implements OnInit {
   auth = inject(AuthService);
 
   ngOnInit() {
+    // Strictly lock scope based on role: Admin = 'all', Instructor = 'my'
+    if (this.auth.hasRole('Admin')) {
+      this.store.setScope('all');
+    } else {
+      this.store.setScope('my');
+    }
+
     this.store.loadEnrollments();
     this.store.listenForLiveUpdates();
-  }
-
-  setScope(scope: 'all' | 'my') {
-    this.store.setScope(scope);
   }
 }

@@ -8,6 +8,14 @@ export interface Course {
   enrollmentCount: number;
   status?: string;
   category?: string;
+  department?: string;
+  credits?: number;
+  summary?: string;
+  description?: string;
+  prerequisites?: string;
+  learningOutcomesJson?: string;
+  syllabusJson?: string;
+  industrySkillsJson?: string;
   instructorId?: string | null;
   instructorName?: string | null;
 }

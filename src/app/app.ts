@@ -7,6 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EnrollmentStore } from './store/enrollment.store';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
+import { LiveSyncService } from './services/live-sync.service';
 
 @Component({
   selector: 'app-root',
@@ -28,6 +29,7 @@ export class App implements OnInit {
   private store = inject(EnrollmentStore);
   public auth = inject(AuthService);
   public themeService = inject(ThemeService);
+  public liveSync = inject(LiveSyncService);
   private router = inject(Router);
 
   async ngOnInit() {
