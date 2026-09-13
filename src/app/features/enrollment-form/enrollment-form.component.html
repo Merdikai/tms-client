@@ -17,7 +17,12 @@
 
     @if (submitted()) {
       <div class="success-celebration-card">
-        <div class="celebration-icon">🎉</div>
+        <div class="celebration-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
         <h2>Enrollment Request Submitted!</h2>
         <p class="celebration-msg">
           Your request for <strong>{{ createdEnrollment()?.courseName }}</strong> has been recorded and marked as <strong>Pending Approval</strong>.
@@ -29,6 +34,20 @@
       </div>
     } @else {
       <form [formGroup]="form" (ngSubmit)="submit()" class="enroll-form">
+        <!-- Student Info Banner -->
+        <div class="student-info-strip">
+          <div class="s-strip-avatar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="s-strip-text">
+            <span>Registering Student: <strong>{{ currentUser()?.displayName || 'Active Student' }}</strong></span>
+            <span class="s-strip-email">{{ currentUser()?.email }}</span>
+          </div>
+        </div>
+
         <div class="form-row">
           <!-- Student ID -->
           <div class="custom-field-group">
@@ -44,17 +63,23 @@
             }
           </div>
 
-          <!-- Course ID -->
+          <!-- Course Selector -->
           <div class="custom-field-group">
-            <label class="field-label" for="courseId">Course ID</label>
-            <input
+            <label class="field-label" for="courseId">Target Course Module</label>
+            <select
               id="courseId"
-              class="custom-input"
+              class="custom-input custom-select"
               formControlName="courseId"
-              placeholder="e.g. 1"
-            />
+            >
+              <option value="" disabled>-- Select Course from Catalog --</option>
+              @for (c of courses(); track c.id) {
+                <option [value]="c.id">
+                  {{ c.code }}: {{ c.title }} ({{ c.enrollmentCount || 0 }}/{{ c.maxCapacity || 30 }} seats)
+                </option>
+              }
+            </select>
             @if (form.controls.courseId.touched && form.controls.courseId.invalid) {
-              <span class="field-error">Course ID is required</span>
+              <span class="field-error">Please select a course to register</span>
             }
           </div>
         </div>

@@ -47,7 +47,7 @@ export const routes: Routes = [
       import('./features/course-list/course-list.component').then(
         (m) => m.CourseListComponent
       ),
-    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
+    canActivate: [roleGuard('Instructor')],
   },
   {
     path: 'student',
@@ -95,7 +95,7 @@ export const routes: Routes = [
       import('./features/grade-submission/grade-submission.component').then(
         (m) => m.GradeSubmissionComponent
       ),
-    canActivate: [anyRoleGuard(['Admin', 'Instructor'])],
+    canActivate: [roleGuard('Instructor')],
   },
   {
     path: '',

@@ -29,6 +29,9 @@ export class EnrollmentFormComponent implements OnInit {
   submitted = signal(false);
   createdEnrollment = signal<Enrollment | null>(null);
 
+  courses = this.courseStore.entities;
+  currentUser = this.auth.currentUser;
+
   form = this.fb.nonNullable.group({
     studentId: [
       'STU-1001',
