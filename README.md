@@ -16,27 +16,31 @@
 
 ---
 
-## 🌟 Application Visual Showcase
+## 🌟 Role-Based Application Visual Showcase
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <strong>👩‍🏫 Instructor Command Center</strong><br>
-      <img src="./public/docs/screenshots/instructor-dashboard.png" alt="Instructor Command Center" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>👩‍🏫 Faculty Instructor Command Center</strong><br>
+      <em>Real-time enrollment diagnostics, status charts, & grading queues</em><br><br>
+      <img src="./public/docs/screenshots/10-instructor-dashboard.png" alt="Instructor Command Center" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
     <td width="50%" align="center">
-      <strong>👨‍🎓 Student Academic Hub</strong><br>
-      <img src="./public/docs/screenshots/student-portal.png" alt="Student Academic Portal" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>👨‍🎓 Student Academic Progress Hub</strong><br>
+      <em>Degree milestones, GPA target calculators, & enrolled courses</em><br><br>
+      <img src="./public/docs/screenshots/07-student-portal.png" alt="Student Academic Portal" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <strong>📚 Course Catalog & Capacity Tracker</strong><br>
-      <img src="./public/docs/screenshots/course-catalog.png" alt="Course Catalog" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>📚 Dynamic Course Catalog</strong><br>
+      <em>Live seat capacity tracker, department filters, & instructor credits</em><br><br>
+      <img src="./public/docs/screenshots/03-course-catalog.png" alt="Course Catalog" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
     <td width="50%" align="center">
-      <strong>📑 Admissions & Enrollment Registry</strong><br>
-      <img src="./public/docs/screenshots/enrollments-registry.png" alt="Admissions Registry" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>🛡️ Administrator Command Center</strong><br>
+      <em>Academy-wide operations, faculty allocations, & admissions metrics</em><br><br>
+      <img src="./public/docs/screenshots/02-admin-dashboard.png" alt="Admin Command Center" width="100%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
   </tr>
 </table>
@@ -51,60 +55,68 @@ Built on **Angular 22** using the modern **zoneless paradigm**, this platform le
 
 ---
 
-## 📸 In-Depth Feature Screenshots
+## 📸 Comprehensive Role & Feature Showcase
 
-### 👩‍🏫 1. Faculty Command Center & KPI Analytics
-> Real-time status diagnostics, KPI metrics (Active Students, Pending Requests, Confirmed Admissions), and dynamic status analytics charts.
+### 👩‍🏫 1. Faculty Instructor Portal & Real-Time Diagnostics
+> Live status diagnostics, KPI metrics (Active Students, Pending Requests, Confirmed Admissions), and dynamic status breakdown analytics.
 <p align="center">
-  <img src="./public/docs/screenshots/instructor-dashboard.png" alt="Instructor Command Center" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/10-instructor-dashboard.png" alt="Instructor Command Center" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
 
-### 👨‍🎓 2. Student Academic Progress & Degree Tracker
-> Program track selection (Software Engineering, Cloud & DevOps, Data & AI), GPA target calculators, earned credits milestones, and course enrollment cards.
+### 🎯 2. Instructor Gradebook & Evaluation Submissions
+> Instructor grading console with student cohort selector, course score inputs, automated GPA / letter grade calculations, and permission validation.
 <p align="center">
-  <img src="./public/docs/screenshots/student-portal.png" alt="Student Academic Portal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/11-instructor-gradebook.png" alt="Instructor Gradebook" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
 
-### 📚 3. Course Catalog & Capacity Management
+### 👨‍🎓 3. Student Academic Progress Hub & Degree Tracker
+> Program track selection (Software Engineering, Cloud & DevOps, Data & AI), GPA target calculators, earned credits milestones, and enrolled course cards.
+<p align="center">
+  <img src="./public/docs/screenshots/07-student-portal.png" alt="Student Academic Portal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+</p>
+
+---
+
+### 🛡️ 3. Institutional Administrator Operations & Admissions Registry
+> Complete admissions and enrollment records with instant search, live status filter chips (Pending, Approved, Rejected), and one-click approvals.
+<p align="center">
+  <img src="./public/docs/screenshots/05-enrollments-registry.png" alt="Enrollments Registry" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+</p>
+
+---
+
+### 📚 4. Course Catalog & Capacity Tracker
 > Academic course offerings with real-time seat capacity progress bars, credit tags, department filters, and instructor assignments.
 <p align="center">
-  <img src="./public/docs/screenshots/course-catalog.png" alt="Course Catalog" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/03-course-catalog.png" alt="Course Catalog" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
 
-### 📑 4. Admissions Registry & One-Click Decisions
-> Complete enrollment registry with instant keyword search, live status filter chips (Pending, Approved, Rejected), CSV report export, and one-click approvals.
+### ✏️ 5. Course Metadata & Faculty Assignment Modal
+> Interactive modal dialog for updating course metadata, instructor assignments, and capacities.
 <p align="center">
-  <img src="./public/docs/screenshots/enrollments-registry.png" alt="Admissions Registry" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/04-course-edit-modal.png" alt="Course Edit Modal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
 
-### 🎯 5. Gradebook & Evaluation Submissions
-> Instructor grading interface with student selection, course score inputs, automated GPA / letter grade calculations, and permission validation.
+### 📝 6. Student Course Application & Enrollment Form
+> Dedicated application form with pre-filled course selections, validation rules, and submission handlers.
 <p align="center">
-  <img src="./public/docs/screenshots/grade-submission.png" alt="Grade Submission Portal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/09-student-enroll-form.png" alt="Student Enrollment Form" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
 
-### 🔐 6. Secure Institutional Authentication & Registration
-> Dual-mode authentication portal with institutional email validation, password strength meters, and student/faculty role selection.
+### 🔐 7. Secure Institutional Authentication
+> Glassmorphism authentication portal with institutional email validation, password security controls, and responsive inputs.
 <p align="center">
-  <img src="./public/docs/screenshots/login-auth.png" alt="Authentication Portal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
-</p>
-
----
-
-### 📝 7. Curriculum & Syllabus Modal Manager
-> Detailed module editor for prerequisites, learning outcomes, syllabus schedule, and industry-aligned skills.
-<p align="center">
-  <img src="./public/docs/screenshots/curriculum-editor.png" alt="Curriculum Editor" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
+  <img src="./public/docs/screenshots/01-login-portal.png" alt="Authentication Portal" width="95%" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.25);" />
 </p>
 
 ---
@@ -113,28 +125,12 @@ Built on **Angular 22** using the modern **zoneless paradigm**, this platform le
 <table>
   <tr>
     <td width="50%" align="center">
-      <strong>Dark Mode Dashboard</strong><br>
-      <img src="./public/docs/screenshots/dashboard-dark.png" alt="Dark Mode Dashboard" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>Dark Mode Theme</strong><br>
+      <img src="./public/docs/screenshots/02-admin-dashboard.png" alt="Dark Mode Theme" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
     <td width="50%" align="center">
-      <strong>Dark Mode Course Catalog</strong><br>
-      <img src="./public/docs/screenshots/courses-dark.png" alt="Dark Mode Courses" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
-    </td>
-  </tr>
-</table>
-
----
-
-### ✏️ 9. Administrative Course Editor & Application Forms
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <strong>Course Configuration Modal</strong><br>
-      <img src="./public/docs/screenshots/course-edit-modal.png" alt="Course Edit Modal" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
-    </td>
-    <td width="50%" align="center">
-      <strong>Student Enrollment Application</strong><br>
-      <img src="./public/docs/screenshots/enrollment-form.png" alt="Enrollment Form" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
+      <strong>Light Mode Theme</strong><br>
+      <img src="./public/docs/screenshots/06-light-mode-theme.png" alt="Light Mode Theme" width="100%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);" />
     </td>
   </tr>
 </table>
