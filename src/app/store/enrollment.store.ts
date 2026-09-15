@@ -15,7 +15,7 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, concatMap, tap, catchError, switchMap, EMPTY, Observable } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment.service';
-import { LiveSyncService } from '../services/live-sync.service';
+import { LiveSyncService, EnrollmentStatusEvent } from '../services/live-sync.service';
 import { AuthService } from '../services/auth.service';
 import { Enrollment } from '../models/enrollment.model';
 
@@ -94,6 +94,10 @@ export const EnrollmentStore = signalStore(
 
     setFilter(filterTerm: string) {
       patchState(store, { filterTerm });
+    },
+
+    setAllEntities(rows: Enrollment[]) {
+      patchState(store, setAllEntities(rows));
     },
 
     setScope(scope: 'all' | 'my') {
@@ -176,7 +180,7 @@ export const EnrollmentStore = signalStore(
       pipe(
         tap(() => sync.connect()),
         switchMap(() => sync.events$),
-        tap((event) => {
+        tap((event: EnrollmentStatusEvent) => {
           patchState(
             store,
             updateEntity({ id: event.id, changes: { status: event.status } })
@@ -185,4 +189,4 @@ export const EnrollmentStore = signalStore(
       )
     ),
   }))
-);
+); 
