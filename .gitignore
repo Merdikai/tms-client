@@ -4,7 +4,8 @@ tmp/
 out-tsc/
 bazel-out/
 
-# Node dependenciesnode_modules/
+# Node dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -38,6 +39,9 @@ yarn-error.log*
 coverage/
 *.lcov
 .nyc_output
+playwright/.auth/
+playwright-report/
+test-results/
 
 # Miscellaneous & OS
 .DS_Store
